@@ -1,59 +1,27 @@
 /* ====================================================================
    ORB COLOR INTERPOLATION VIA CSS CUSTOM PROPERTIES
-   JavaScript nastavuje --orb-r, --orb-g, --orb-b (0-255)
-   CSS používá transitions pro smooth interpolaci
+   
+   JavaScript nastavuje (AnimatedBackground.tsx):
+   - --scroll-progress (0-1) - globální scroll progress přes celou stránku
+   - --scroll-percent (0-100) - globální scroll %
+   - --orb-r, --orb-g, --orb-b (0-255) - interpolované RGB hodnoty
+   
+   JavaScript dělá interpolaci pomocí lerp() mezi breakpointy
+   CSS jen zobrazuje výslednou barvu s plynulými transitions
+   
+   Theme breakpointy jsou na: 0%, 12.5%, 25%, 37.5%, 50%, 
+                               62.5%, 75%, 87.5%, 100%
    ==================================================================== */
 
-/* Smooth transitions pro barvy orbů */
+/* Default hodnoty pro --orb-r/g/b (indigo pro Hero sekci) */
+:root {
+  --orb-r: 99;
+  --orb-g: 102;
+  --orb-b: 241;
+}
+
+/* Smooth transitions pro barvy orbů - velmi krátký pro vyhlazení */
+/* JavaScript updates jsou každý frame (~16ms), transition jen vyhlazuje */
 .orb-1, .orb-2, .orb-3, .orb-4, .orb-5, .orb-6 {
-  transition: background 0.15s ease-out;
-}
-
-/* Každý orb má jiný opacity level */
-.orb-1 {
-  background: radial-gradient(
-    circle,
-    rgba(var(--orb-r, 99), var(--orb-g, 102), var(--orb-b, 241), 0.15) 0%,
-    transparent 70%
-  );
-}
-
-.orb-2 {
-  background: radial-gradient(
-    circle,
-    rgba(var(--orb-r, 99), var(--orb-g, 102), var(--orb-b, 241), 0.13) 0%,
-    transparent 70%
-  );
-}
-
-.orb-3 {
-  background: radial-gradient(
-    circle,
-    rgba(var(--orb-r, 99), var(--orb-g, 102), var(--orb-b, 241), 0.12) 0%,
-    transparent 70%
-  );
-}
-
-.orb-4 {
-  background: radial-gradient(
-    circle,
-    rgba(var(--orb-r, 99), var(--orb-g, 102), var(--orb-b, 241), 0.14) 0%,
-    transparent 70%
-  );
-}
-
-.orb-5 {
-  background: radial-gradient(
-    circle,
-    rgba(var(--orb-r, 99), var(--orb-g, 102), var(--orb-b, 241), 0.13) 0%,
-    transparent 70%
-  );
-}
-
-.orb-6 {
-  background: radial-gradient(
-    circle,
-    rgba(var(--orb-r, 99), var(--orb-g, 102), var(--orb-b, 241), 0.12) 0%,
-    transparent 70%
-  );
+  transition: background 0.016s linear; /* ~1 frame na 60fps */
 }

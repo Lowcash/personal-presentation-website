@@ -2,38 +2,37 @@ import { useEffect, useRef, useState } from 'react';
 
 export function useStaggerFadeIn(itemCount: number, options = {}) {
   const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(true); // Always visible - no animations
 
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
+  // Vypnuto - žádné animace
+  // useEffect(() => {
+  //   const element = ref.current;
+  //   if (!element) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        // Animate in when entering viewport, animate out when leaving
-        setIsVisible(entry.isIntersecting);
-      },
-      {
-        threshold: 0.1,
-        ...options,
-      }
-    );
+  //   const observer = new IntersectionObserver(
+  //     ([entry]) => {
+  //       setIsVisible(entry.isIntersecting);
+  //     },
+  //     {
+  //       threshold: 0.1,
+  //       ...options,
+  //     }
+  //   );
 
-    observer.observe(element);
+  //   observer.observe(element);
 
-    return () => {
-      if (element) {
-        observer.unobserve(element);
-      }
-    };
-  }, []);
+  //   return () => {
+  //     if (element) {
+  //       observer.unobserve(element);
+  //     }
+  //   };
+  // }, []);
 
-  // Generate delay for each item (80ms stagger for faster transitions)
+  // Žádné animace - vše je viditelné
   const getItemStyle = (index: number) => ({
-    opacity: isVisible ? 1 : 0,
-    transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
-    transition: 'opacity 0.4s ease-out, transform 0.4s ease-out',
-    transitionDelay: `${index * 80}ms`,
+    opacity: 1,
+    transform: 'translateY(0)',
+    // Žádné transitions
   });
 
   return { ref, isVisible, getItemStyle };

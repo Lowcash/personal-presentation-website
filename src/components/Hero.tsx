@@ -1,29 +1,11 @@
 import { ChevronDown } from 'lucide-react';
-import { useState, useEffect } from 'react';
 
 export function Hero() {
-  const [scrollY, setScrollY] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   return (
     <section className="relative h-screen flex items-center justify-center px-6">
       {/* Removed background gradient - AnimatedBackground handles it */}
 
-      <div 
-        className="relative z-10 text-center px-4"
-        style={{
-          transform: `translateY(${scrollY * 0.3}px)`,
-          transition: 'none' // Remove transition for smooth parallax
-        }}
-      >
+      <div className="relative z-10 text-center px-4">
         {/* TITLE - WITH GRADIENT + MASIVNÍ GLOW */}
         <div className="py-8">
           <h1 

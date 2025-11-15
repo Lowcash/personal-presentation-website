@@ -12,7 +12,7 @@ export function WorkExperience() {
       title: 'Game Development',
       period: '4 years',
       description: 'Professional game development work building interactive experiences. Deepened expertise in JavaScript, TypeScript, and modern web technologies while shipping production projects.',
-      technologies: ['JavaScript', 'TypeScript', 'WebGL', 'Game Engines', 'Performance Optimization'],
+      technologies: ['JavaScript', 'TypeScript', 'Phaser (2D Games)', 'Game Engines', 'Performance Optimization'],
       iconColor: 'text-cyan-400',
       glowColor: 'rgba(34,211,238,0.5)',
       innerGlow: 'rgba(34,211,238,0.08)'

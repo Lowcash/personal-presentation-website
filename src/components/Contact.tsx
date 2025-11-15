@@ -42,7 +42,7 @@ export function Contact() {
               filter: 'drop-shadow(0 0 12px rgba(232, 121, 249, 0.6)) drop-shadow(0 0 24px rgba(244, 114, 182, 0.4))'
             }}
           >
-            Let's Connect
+            Get in Touch
           </h2>
           <p className="text-base md:text-lg text-gray-400 mb-16 max-w-2xl mx-auto">
             Whether you need a fullstack developer, want to collaborate on an ML project, 

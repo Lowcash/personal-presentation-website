@@ -12,23 +12,90 @@ import { ScrollToTop } from './components/ScrollToTop';
 import { ScrollNavigation } from './components/ScrollNavigation';
 import { MetaTags } from './components/MetaTags';
 import { AnimatedBackground } from './components/AnimatedBackground';
-import { useEffect } from 'react';
-import { useScrollProgressWithInterpolation } from './hooks/useScrollProgressWithInterpolation';
+import { ParallaxSection } from './components/ParallaxSection';
+import { useEffect, useState, useRef } from 'react';
 
 export default function App() {
   const sections = [
-    { Component: Hero, name: 'Hero', id: 'hero' },
+    { Component: Hero, name: 'Hey', id: 'hero' },
     { Component: WhoIAm, name: 'Who I Am', id: 'who-i-am' },
-    { Component: TechJourney, name: 'Tech Stack', id: 'tech-journey' },
+    { Component: TechJourney, name: 'My Stack', id: 'tech-journey' },
     { Component: NotableWork, name: 'Notable Work', id: 'notable-work' },
     { Component: Education, name: 'Education', id: 'education' },
     { Component: WorkExperience, name: 'Experience', id: 'work-experience' },
     { Component: BeyondCode, name: 'Beyond Code', id: 'beyond-code' },
     { Component: WhatsNext, name: "What's Next", id: 'whats-next' },
-    { Component: Contact, name: 'Contact', id: 'contact' },
+    { Component: Contact, name: 'Get in Touch', id: 'contact' },
   ];
 
-  const { progress, currentSection, sectionProgress, rawSection } = useScrollProgressWithInterpolation();
+  const [currentSection, setCurrentSection] = useState(0);
+  const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set());
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  // Intersection Observer pro fade efekt
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          setVisibleSections(prev => {
+            const newSet = new Set(prev);
+            if (entry.isIntersecting) {
+              newSet.add(entry.target.id);
+            } else {
+              newSet.delete(entry.target.id);
+            }
+            return newSet;
+          });
+        });
+      },
+      {
+        threshold: 0.15, // Trigger when 15% of section is visible (citlivější)
+        rootMargin: '0px' // Bez margin pro přesnější timing
+      }
+    );
+
+    // Observe all sections
+    sections.forEach(({ id }) => {
+      const element = document.getElementById(id);
+      if (element && observerRef.current) {
+        observerRef.current.observe(element);
+      }
+    });
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, []);
+
+  // Simple scroll tracking - which section is in view
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const windowHeight = window.innerHeight;
+      
+      // Find which section we're in (middle of viewport)
+      const sectionIndex = sections.findIndex((_, index) => {
+        const element = document.getElementById(sections[index].id);
+        if (!element) return false;
+        
+        const rect = element.getBoundingClientRect();
+        const sectionMiddle = rect.top + rect.height / 2;
+        
+        // Check if section middle is near viewport middle
+        return sectionMiddle > 0 && sectionMiddle < windowHeight;
+      });
+      
+      if (sectionIndex !== -1) {
+        setCurrentSection(sectionIndex);
+      }
+    };
+
+    handleScroll(); // Initial
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [sections]);
 
   useEffect(() => {
     // Set favicon
@@ -60,22 +127,25 @@ export default function App() {
     <>
       <MetaTags />
       
-      {/* ANIMATED BACKGROUND */}
-      <AnimatedBackground currentSection={currentSection} sectionProgress={sectionProgress} interpolationFactor={rawSection} />
+      {/* ANIMATED BACKGROUND - čistě od scroll pozice */}
+      <AnimatedBackground />
       
       <div className="text-white" style={{ background: 'transparent' }}>
-        <ScrollProgress progress={progress} currentSection={currentSection} sectionProgress={sectionProgress} />
+        <ScrollProgress />
         
-        {/* All sections */}
+        {/* All sections - scroll snap + fade + parallax effect */}
         {sections.map(({ Component, id }) => (
-          <section
+          <ParallaxSection
             key={id}
             id={id}
             className="min-h-screen"
-            style={{ scrollSnapAlign: 'start' }}
+            style={{ 
+              scrollSnapAlign: 'start',
+              opacity: visibleSections.has(id) ? 1 : 0.05
+            }}
           >
             <Component />
-          </section>
+          </ParallaxSection>
         ))}
         
         <ScrollToTop 

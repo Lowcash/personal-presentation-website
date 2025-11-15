@@ -1,28 +1,18 @@
-import { motion, useSpring } from 'motion/react';
-import { useEffect } from 'react';
-
-interface ScrollProgressProps {
-  progress: number; // 0-100
-  currentSection: number;
-  sectionProgress: number; // not used
-}
-
-export function ScrollProgress({ progress, currentSection }: ScrollProgressProps) {
-  const scaleX = useSpring(progress / 100, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001
-  });
-
-  useEffect(() => {
-    scaleX.set(progress / 100);
-  }, [progress, scaleX]);
-
+export function ScrollProgress() {
+  // CSS vars (--orb-r, --orb-g, --orb-b, --scroll-progress) are set by AnimatedBackground
+  // with smooth interpolation via RAF, so no transition needed!
+  
   return (
-    <motion.div
-      className="fixed top-0 left-0 right-0 h-1 origin-left z-50 progress-bar-animated"
-      style={{ scaleX }}
-      data-section={currentSection}
+    <div
+      className="fixed top-0 left-0 right-0 h-1 z-50"
+      style={{ 
+        background: 'rgb(var(--orb-r), var(--orb-g), var(--orb-b))',
+        width: '100%',
+        transformOrigin: 'left',
+        transform: `scaleX(var(--scroll-progress, 0))`,
+        // NO transition needed - smooth interpolation happens in JS via RAF
+        willChange: 'transform, background-color'
+      }}
     />
   );
 }

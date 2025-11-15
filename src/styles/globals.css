@@ -2,6 +2,14 @@
 
 @import './orb-interpolation.css';
 
+/* Custom utilities */
+@layer utilities {
+  /* Radial gradient for vignette effect */
+  .bg-gradient-radial {
+    background: radial-gradient(circle at center, var(--tw-gradient-stops));
+  }
+}
+
 :root {
   --font-size: 16px;
   --background: #ffffff;
@@ -208,7 +216,6 @@ html {
   scrollbar-width: none;  /* Firefox */
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
-  scroll-snap-stop: normal; /* Faster scrolling */
 }
 
 /* HIDE SCROLLBAR - minimalistický look */
@@ -523,62 +530,58 @@ body {
   }
 }
 
-/* Animated orbs with floating */
+/* Animated orbs with floating - OPTIMIZED: 8 orbs only */
 .orb-1 { animation: orb-float-1 45s ease-in-out infinite; }
 .orb-2 { animation: orb-float-2 38s ease-in-out infinite; }
 .orb-3 { animation: orb-float-3 42s ease-in-out infinite; }
 .orb-4 { animation: orb-float-4 40s ease-in-out infinite; }
 .orb-5 { animation: orb-float-5 36s ease-in-out infinite; }
 .orb-6 { animation: orb-float-6 44s ease-in-out infinite; }
+.orb-7 { animation: orb-float-1 50s ease-in-out infinite reverse; }
+.orb-8 { animation: orb-float-2 46s ease-in-out infinite reverse; }
 
-/* ScrollToTop animated colors */
-.scroll-to-top-animated .scroll-glow,
-.scroll-to-top-animated .scroll-inner,
-.scroll-to-top-animated .scroll-icon {
-  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+/* Mobile performance - disable heavy animations */
+@media (max-width: 768px) {
+  .orb-1, .orb-2, .orb-3, .orb-4, .orb-5, .orb-6, .orb-7, .orb-8 {
+    animation: none;
+  }
 }
 
-/* Section 0: Hero */
-[data-section="0"].scroll-to-top-animated .scroll-glow { box-shadow: 0 0 40px rgba(168, 85, 247, 0.5); }
-[data-section="0"].scroll-to-top-animated .scroll-inner { box-shadow: inset 0 2px 20px rgba(0,0,0,0.5), inset 0 0 30px rgba(168, 85, 247, 0.08); }
-[data-section="0"].scroll-to-top-animated .scroll-icon { color: rgb(192, 132, 252); }
+/* ============================================
+   OPTIMALIZED: Color effects via CSS variables
+   ============================================ */
 
-/* Section 1: Who I Am */
-[data-section="1"].scroll-to-top-animated .scroll-glow { box-shadow: 0 0 40px rgba(34, 211, 238, 0.5); }
-[data-section="1"].scroll-to-top-animated .scroll-inner { box-shadow: inset 0 2px 20px rgba(0,0,0,0.5), inset 0 0 30px rgba(34, 211, 238, 0.08); }
-[data-section="1"].scroll-to-top-animated .scroll-icon { color: rgb(34, 211, 238); }
+/* ScrollToTop - glow using CSS custom properties */
+.scroll-to-top-glow {
+  box-shadow: 0 0 40px rgba(var(--orb-r), var(--orb-g), var(--orb-b), 0.5);
+  transition: box-shadow 0.3s ease-out;
+}
 
-/* Section 2: Tech Journey */
-[data-section="2"].scroll-to-top-animated .scroll-glow { box-shadow: 0 0 40px rgba(251, 146, 60, 0.5); }
-[data-section="2"].scroll-to-top-animated .scroll-inner { box-shadow: inset 0 2px 20px rgba(0,0,0,0.5), inset 0 0 30px rgba(251, 146, 60, 0.08); }
-[data-section="2"].scroll-to-top-animated .scroll-icon { color: rgb(251, 146, 60); }
+.scroll-to-top-inner {
+  box-shadow: inset 0 2px 20px rgba(0,0,0,0.5), inset 0 0 30px rgba(var(--orb-r), var(--orb-g), var(--orb-b), 0.08);
+  transition: box-shadow 0.3s ease-out;
+}
 
-/* Section 3: Notable Work */
-[data-section="3"].scroll-to-top-animated .scroll-glow { box-shadow: 0 0 40px rgba(168, 85, 247, 0.5); }
-[data-section="3"].scroll-to-top-animated .scroll-inner { box-shadow: inset 0 2px 20px rgba(0,0,0,0.5), inset 0 0 30px rgba(168, 85, 247, 0.08); }
-[data-section="3"].scroll-to-top-animated .scroll-icon { color: rgb(192, 132, 252); }
+.scroll-to-top-icon {
+  color: rgb(var(--orb-r), var(--orb-g), var(--orb-b));
+  transition: color 0.3s ease-out;
+}
 
-/* Section 4: Education */
-[data-section="4"].scroll-to-top-animated .scroll-glow { box-shadow: 0 0 40px rgba(34, 197, 94, 0.5); }
-[data-section="4"].scroll-to-top-animated .scroll-inner { box-shadow: inset 0 2px 20px rgba(0,0,0,0.5), inset 0 0 30px rgba(34, 197, 94, 0.08); }
-[data-section="4"].scroll-to-top-animated .scroll-icon { color: rgb(74, 222, 128); }
+/* ScrollNavigation - active dot using CSS custom properties */
+.scroll-nav-dot-active {
+  background-color: rgb(var(--orb-r), var(--orb-g), var(--orb-b));
+  box-shadow: 0 0 12px rgba(var(--orb-r), var(--orb-g), var(--orb-b), 0.8);
+  transition: all 0.3s ease-out;
+}
 
-/* Section 5: Work Experience */
-[data-section="5"].scroll-to-top-animated .scroll-glow { box-shadow: 0 0 40px rgba(34, 211, 238, 0.5); }
-[data-section="5"].scroll-to-top-animated .scroll-inner { box-shadow: inset 0 2px 20px rgba(0,0,0,0.5), inset 0 0 30px rgba(34, 211, 238, 0.08); }
-[data-section="5"].scroll-to-top-animated .scroll-icon { color: rgb(34, 211, 238); }
+.scroll-nav-dot-inactive {
+  background-color: rgba(156, 163, 175, 0.4);
+  transition: all 0.3s ease-out;
+}
 
-/* Section 6: Beyond Code */
-[data-section="6"].scroll-to-top-animated .scroll-glow { box-shadow: 0 0 40px rgba(163, 230, 53, 0.5); }
-[data-section="6"].scroll-to-top-animated .scroll-inner { box-shadow: inset 0 2px 20px rgba(0,0,0,0.5), inset 0 0 30px rgba(163, 230, 53, 0.08); }
-[data-section="6"].scroll-to-top-animated .scroll-icon { color: rgb(163, 230, 53); }
-
-/* Section 7: What's Next */
-[data-section="7"].scroll-to-top-animated .scroll-glow { box-shadow: 0 0 40px rgba(250, 204, 21, 0.5); }
-[data-section="7"].scroll-to-top-animated .scroll-inner { box-shadow: inset 0 2px 20px rgba(0,0,0,0.5), inset 0 0 30px rgba(250, 204, 21, 0.08); }
-[data-section="7"].scroll-to-top-animated .scroll-icon { color: rgb(250, 204, 21); }
-
-/* Section 8: Contact */
-[data-section="8"].scroll-to-top-animated .scroll-glow { box-shadow: 0 0 40px rgba(232, 121, 249, 0.5); }
-[data-section="8"].scroll-to-top-animated .scroll-inner { box-shadow: inset 0 2px 20px rgba(0,0,0,0.5), inset 0 0 30px rgba(232, 121, 249, 0.08); }
-[data-section="8"].scroll-to-top-animated .scroll-icon { color: rgb(232, 121, 249); }
+/* Mobile dots - smaller glow */
+@media (max-width: 768px) {
+  .scroll-nav-dot-active {
+    box-shadow: 0 0 8px rgba(var(--orb-r), var(--orb-g), var(--orb-b), 0.8);
+  }
+}

@@ -19,7 +19,7 @@ export function TechJourney() {
     { 
       icon: Database,
       category: 'Backend', 
-      items: ['Node.js', 'tRPC', 'GraphQL', 'Prisma', 'REST APIs'], 
+      items: ['Node.js', 'tRPC', 'Prisma', 'REST APIs', 'PostgreSQL'], 
       description: 'End-to-end type safety with tRPC, building scalable APIs and server-side logic with Prisma ORM',
       iconColor: 'text-pink-400',
       glowColor: 'rgba(244,114,182,0.5)',
@@ -28,8 +28,8 @@ export function TechJourney() {
     { 
       icon: Box,
       category: 'Computer Graphics', 
-      items: ['Unity', 'Shader Programming (Cg)', 'OpenCV', 'Real-time Rendering'], 
-      description: 'Academic experience with VR, custom shaders, and computer vision from university projects',
+      items: ['Unity', 'VR Development', 'Shader Programming (Cg)', 'OpenCV'], 
+      description: 'University projects with VR, custom shaders, and computer vision',
       iconColor: 'text-orange-400',
       glowColor: 'rgba(251,146,60,0.5)',
       innerGlow: 'rgba(251,146,60,0.08)'
@@ -46,7 +46,7 @@ export function TechJourney() {
     { 
       icon: Globe,
       category: 'Agentic & Design', 
-      items: ['GitHub Copilot', 'AI-Assisted Dev', 'Figma', 'System Architecture'], 
+      items: ['AI-Assisted Workflows', 'Claude, Copilot', 'Figma', 'System Architecture'], 
       description: 'Leveraging AI tools to ship faster, architect better systems, and bridge design-to-code gap',
       iconColor: 'text-orange-400',
       glowColor: 'rgba(251,146,60,0.5)',
@@ -69,7 +69,7 @@ export function TechJourney() {
               filter: 'drop-shadow(0 0 12px rgba(251, 146, 60, 0.6)) drop-shadow(0 0 24px rgba(245, 158, 11, 0.4))'
             }}
           >
-            Tech Stack
+            My Stack
           </h2>
           <p className="text-base md:text-lg text-gray-400">
             A diverse toolkit built over years of exploration and real-world projects

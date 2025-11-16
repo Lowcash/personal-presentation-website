@@ -69,7 +69,7 @@ export function TechJourney() {
               filter: 'drop-shadow(0 0 12px rgba(251, 146, 60, 0.6)) drop-shadow(0 0 24px rgba(245, 158, 11, 0.4))'
             }}
           >
-            My Stack
+            Tech Stack
           </h2>
           <p className="text-base md:text-lg text-gray-400">
             A diverse toolkit built over years of exploration and real-world projects

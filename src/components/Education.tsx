@@ -46,7 +46,7 @@ export function Education() {
               filter: 'drop-shadow(0 0 12px rgba(34, 197, 94, 0.6)) drop-shadow(0 0 24px rgba(16, 185, 129, 0.4))'
             }}
           >
-            Education
+            Academic Journey
           </h2>
           <p className="text-base md:text-lg text-gray-400">
             Academic foundation in computer graphics and visual computing

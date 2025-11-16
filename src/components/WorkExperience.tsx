@@ -44,7 +44,7 @@ export function WorkExperience() {
               filter: 'drop-shadow(0 0 12px rgba(34, 211, 238, 0.6)) drop-shadow(0 0 24px rgba(20, 184, 166, 0.4))'
             }}
           >
-            Experience
+            Work Experience
           </h2>
           <p className="text-base md:text-lg text-gray-400">
             Building production software across gaming and fullstack systems

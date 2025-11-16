@@ -10,6 +10,9 @@
       --tw-rotate-z: rotateZ(0);
       --tw-skew-x: skewX(0);
       --tw-skew-y: skewY(0);
+      --tw-pan-x: initial;
+      --tw-pan-y: initial;
+      --tw-pinch-zoom: initial;
       --tw-space-y-reverse: 0;
       --tw-border-style: solid;
       --tw-gradient-position: initial;
@@ -74,9 +77,7 @@
     --color-blue-500: oklch(.623 .214 259.815);
     --color-indigo-400: oklch(.673 .182 276.935);
     --color-indigo-500: oklch(.585 .233 277.117);
-    --color-purple-300: oklch(.827 .119 306.383);
     --color-purple-400: oklch(.714 .203 305.504);
-    --color-purple-500: oklch(.627 .265 303.9);
     --color-fuchsia-400: oklch(.74 .238 322.16);
     --color-pink-400: oklch(.718 .202 349.761);
     --color-pink-500: oklch(.656 .241 354.308);
@@ -711,12 +712,13 @@
     animation: var(--animate-pulse);
   }
 
-  .cursor-grab {
-    cursor: grab;
-  }
-
   .cursor-pointer {
     cursor: pointer;
+  }
+
+  .touch-pan-y {
+    --tw-pan-y: pan-y;
+    touch-action: var(--tw-pan-x, ) var(--tw-pan-y, ) var(--tw-pinch-zoom, );
   }
 
   .flex-col {
@@ -797,16 +799,6 @@
     border-width: 1px;
   }
 
-  .border-purple-500\/30 {
-    border-color: color-mix(in srgb, oklch(.627 .265 303.9) 30%, transparent);
-  }
-
-  @supports (color: color-mix(in lab, red, red)) {
-    .border-purple-500\/30 {
-      border-color: color-mix(in oklab, var(--color-purple-500) 30%, transparent);
-    }
-  }
-
   .border-white\/10 {
     border-color: #ffffff1a;
   }
@@ -863,20 +855,6 @@
 
   .bg-gray-950 {
     background-color: var(--color-gray-950);
-  }
-
-  .bg-purple-400 {
-    background-color: var(--color-purple-400);
-  }
-
-  .bg-purple-500\/20 {
-    background-color: color-mix(in srgb, oklch(.627 .265 303.9) 20%, transparent);
-  }
-
-  @supports (color: color-mix(in lab, red, red)) {
-    .bg-purple-500\/20 {
-      background-color: color-mix(in oklab, var(--color-purple-500) 20%, transparent);
-    }
   }
 
   .bg-white\/5 {
@@ -1230,10 +1208,6 @@
     color: var(--color-pink-400);
   }
 
-  .text-purple-300 {
-    color: var(--color-purple-300);
-  }
-
   .text-purple-400 {
     color: var(--color-purple-400);
   }
@@ -1252,6 +1226,10 @@
 
   .opacity-0 {
     opacity: 0;
+  }
+
+  .opacity-80 {
+    opacity: .8;
   }
 
   .opacity-100 {
@@ -1378,10 +1356,6 @@
     .hover\:text-white:hover {
       color: var(--color-white);
     }
-  }
-
-  .active\:cursor-grabbing:active {
-    cursor: grabbing;
   }
 
   @media (width >= 40rem) {
@@ -2040,6 +2014,21 @@ body {
   syntax: "*";
   inherits: false;
   initial-value: skewY(0);
+}
+
+@property --tw-pan-x {
+  syntax: "*";
+  inherits: false
+}
+
+@property --tw-pan-y {
+  syntax: "*";
+  inherits: false
+}
+
+@property --tw-pinch-zoom {
+  syntax: "*";
+  inherits: false
 }
 
 @property --tw-space-y-reverse {

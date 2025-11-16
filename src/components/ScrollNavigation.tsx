@@ -6,27 +6,36 @@ interface ScrollNavigationProps {
   totalSections: number;
   sectionNames: string[];
   onSectionClick: (index: number) => void;
+  onMenuStateChange?: (isOpen: boolean) => void;
 }
 
-export function ScrollNavigation({ currentSection, totalSections, sectionNames, onSectionClick }: ScrollNavigationProps) {
+export function ScrollNavigation({ currentSection, totalSections, sectionNames, onSectionClick, onMenuStateChange }: ScrollNavigationProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dragStartY, setDragStartY] = useState<number | null>(null);
   const [dragCurrentY, setDragCurrentY] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
-  
+  const scrollPositionRef = useRef(0);
+
   const sections = Array.from({ length: totalSections }, (_, i) => ({
     id: i,
     label: sectionNames[i],
   }));
 
   const handleMobileClick = (index: number) => {
-    onSectionClick(index);
+    // First close the menu (this will re-enable scroll)
     setMobileMenuOpen(false);
+    
+    // Then navigate after a small delay to allow menu to close
+    setTimeout(() => {
+      onSectionClick(index);
+    }, 100);
   };
 
   // Swipe to close functionality
   const handleTouchStart = (e: React.TouchEvent) => {
     setDragStartY(e.touches[0].clientY);
+    setIsDragging(false);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -38,6 +47,9 @@ export function ScrollNavigation({ currentSection, totalSections, sectionNames, 
     // Only allow dragging down
     if (diff > 0) {
       setDragCurrentY(currentY);
+      if (diff > 5) { // 5px threshold before considering it a drag
+        setIsDragging(true);
+      }
     }
   };
 
@@ -45,6 +57,7 @@ export function ScrollNavigation({ currentSection, totalSections, sectionNames, 
     if (dragStartY === null || dragCurrentY === null) {
       setDragStartY(null);
       setDragCurrentY(null);
+      setIsDragging(false);
       return;
     }
 
@@ -57,7 +70,60 @@ export function ScrollNavigation({ currentSection, totalSections, sectionNames, 
     
     setDragStartY(null);
     setDragCurrentY(null);
+    // Reset isDragging after a small delay to allow click prevention
+    setTimeout(() => setIsDragging(false), 10);
   };
+
+  // Mouse events for desktop testing
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setDragStartY(e.clientY);
+    setIsDragging(false);
+  };
+
+  // Handle mouse move and up on document level
+  useEffect(() => {
+    if (dragStartY === null) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (dragStartY === null) return;
+      
+      const currentY = e.clientY;
+      const diff = currentY - dragStartY;
+      
+      // Only allow dragging down
+      if (diff > 0) {
+        setDragCurrentY(currentY);
+        if (diff > 5) { // 5px threshold before considering it a drag
+          setIsDragging(true);
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      // Calculate total drag distance
+      const diff = dragCurrentY !== null && dragStartY !== null 
+        ? dragCurrentY - dragStartY 
+        : 0;
+      
+      // Only close if dragged significantly (> 100px)
+      if (diff > 100) {
+        setMobileMenuOpen(false);
+      }
+      
+      // Reset all drag state
+      setDragStartY(null);
+      setDragCurrentY(null);
+      setIsDragging(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [dragStartY, dragCurrentY]);
 
   // Calculate drag offset for visual feedback
   const getDragOffset = () => {
@@ -73,6 +139,54 @@ export function ScrollNavigation({ currentSection, totalSections, sectionNames, 
       setDragCurrentY(null);
     }
   }, [mobileMenuOpen]);
+
+  // Prevent body scroll when menu is open - PROPER SOLUTION
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      // Save current scroll position
+      scrollPositionRef.current = window.scrollY;
+      
+      // Prevent scroll - use HTML element instead of body to avoid layout shift
+      const html = document.documentElement;
+      const body = document.body;
+      
+      // Store original styles
+      const originalHtmlOverflow = html.style.overflow;
+      const originalBodyOverflow = body.style.overflow;
+      
+      // Lock scroll
+      //html.style.overflow = 'hidden';
+      //body.style.overflow = 'hidden';
+      
+      // Also prevent touch scrolling on mobile
+      const preventScroll = (e: TouchEvent) => {
+        // Allow scrolling within the drawer itself
+        if (drawerRef.current && drawerRef.current.contains(e.target as Node)) {
+          return;
+        }
+        e.preventDefault();
+      };
+      
+      document.body.addEventListener('touchmove', preventScroll, { passive: false });
+      
+      return () => {
+        // Restore scroll
+        html.style.overflow = originalHtmlOverflow;
+        body.style.overflow = originalBodyOverflow;
+        document.body.removeEventListener('touchmove', preventScroll);
+        
+        // Restore scroll position (shouldn't be needed but just in case)
+        window.scrollTo(0, scrollPositionRef.current);
+      };
+    }
+  }, [mobileMenuOpen]);
+
+  // Notify parent about menu state change
+  useEffect(() => {
+    if (onMenuStateChange) {
+      onMenuStateChange(mobileMenuOpen);
+    }
+  }, [mobileMenuOpen, onMenuStateChange]);
 
   return (
     <>
@@ -140,10 +254,7 @@ export function ScrollNavigation({ currentSection, totalSections, sectionNames, 
         {/* Menu panel - slide from bottom with swipe support */}
         <div 
           ref={drawerRef}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          className={`absolute bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl rounded-t-3xl transition-all duration-300 ${
+          className={`absolute bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl rounded-t-3xl transition-all duration-300 touch-pan-y ${
             mobileMenuOpen ? 'translate-y-0' : 'translate-y-full'
           }`}
           style={{
@@ -154,36 +265,77 @@ export function ScrollNavigation({ currentSection, totalSections, sectionNames, 
             transition: dragStartY !== null ? 'none' : 'transform 0.3s ease-out'
           }}
         >
-          {/* Handle bar - visual hint for swipe */}
-          <div className="flex justify-center pt-4 pb-2 cursor-grab active:cursor-grabbing">
+          {/* Handle bar - visual hint for swipe - THIS is the drag area */}
+          <div 
+            className="flex justify-center pt-4 pb-2"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onMouseDown={handleMouseDown}
+          >
             <div className="w-12 h-1 bg-gray-600 rounded-full" />
           </div>
           
           {/* Menu items */}
           <div className="px-6 pb-8 pt-4">
-            <h3 className="text-sm text-gray-400 mb-4 px-4">Navigate to Section</h3>
             <div className="space-y-2">
-              {sections.map((section) => (
-                <button
-                  key={section.id}
-                  onClick={() => handleMobileClick(section.id)}
-                  className={`w-full text-left px-4 py-4 rounded-xl transition-all duration-300 ${
-                    currentSection === section.id 
-                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' 
-                      : 'bg-white/5 text-gray-300 border border-white/10 hover:bg-white/10'
-                  }`}
-                  style={{
-                    minHeight: '56px', // Apple HIG minimum touch target
-                  }}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-base">{section.label}</span>
-                    {currentSection === section.id && (
-                      <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+              {sections.map((section) => {
+                const isActive = currentSection === section.id;
+                
+                return (
+                  <button
+                    key={section.id}
+                    onClick={() => handleMobileClick(section.id)}
+                    className={`w-full text-left px-4 py-4 rounded-xl transition-all duration-300 relative ${
+                      isActive 
+                        ? 'text-white' // White text for active
+                        : 'bg-white/5 text-gray-300 hover:bg-white/10'
+                    }`}
+                    style={{
+                      minHeight: '56px', // Apple HIG minimum touch target
+                    }}
+                  >
+                    {/* Active state - same glow effect as hamburger/scroll-to-top */}
+                    {isActive && (
+                      <>
+                        {/* Shimmer glow layer - outer glow - STRONGER */}
+                        <div 
+                          className="absolute inset-0 pointer-events-none rounded-xl animate-glow-shimmer -z-10" 
+                          style={{
+                            boxShadow: '0 0 60px rgba(var(--orb-r), var(--orb-g), var(--orb-b), 0.8), 0 0 100px rgba(var(--orb-r), var(--orb-g), var(--orb-b), 0.4)',
+                            transition: 'box-shadow 0.3s ease-out'
+                          }}
+                        />
+                        
+                        {/* Inner background with blur - MORE COLOR */}
+                        <div 
+                          className="absolute inset-0 rounded-xl bg-black/40 backdrop-blur-sm -z-10"
+                          style={{
+                            boxShadow: 'inset 0 2px 20px rgba(0,0,0,0.5), inset 0 0 60px rgba(var(--orb-r), var(--orb-g), var(--orb-b), 0.25)',
+                            backgroundColor: `rgba(var(--orb-r), var(--orb-g), var(--orb-b), 0.15)`,
+                            transition: 'all 0.3s ease-out'
+                          }}
+                        />
+                      </>
                     )}
-                  </div>
-                </button>
-              ))}
+                    
+                    <div className="flex items-center justify-between relative z-10">
+                      <span className="text-base">
+                        {section.label}
+                      </span>
+                      {isActive && (
+                        <div 
+                          className="w-2 h-2 rounded-full animate-pulse opacity-80"
+                          style={{
+                            backgroundColor: 'rgb(var(--orb-r), var(--orb-g), var(--orb-b))',
+                            transition: 'background-color 0.3s ease-out'
+                          }}
+                        />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

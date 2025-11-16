@@ -18,19 +18,20 @@ import { useEffect, useState, useRef } from 'react';
 
 export default function App() {
   const sections = [
-    { Component: Hero, name: 'Hey There', id: 'hero' },
-    { Component: WhoIAm, name: 'Who I Am', id: 'who-i-am' },
-    { Component: TechJourney, name: 'Tech Stack', id: 'tech-journey' },
-    { Component: NotableWork, name: 'Notable Work', id: 'notable-work' },
-    { Component: Education, name: 'Academic Journey', id: 'education' },
-    { Component: WorkExperience, name: 'Work Experience', id: 'work-experience' },
-    { Component: BeyondCode, name: 'Beyond Code', id: 'beyond-code' },
-    { Component: WhatsNext, name: "What's Next", id: 'whats-next' },
-    { Component: Contact, name: "Let's Connect", id: 'contact' },
+    { Component: Hero, name: 'Hey There', id: 'hero', color: '#c084fc' }, // Purple (from hero gradient)
+    { Component: WhoIAm, name: 'Who I Am', id: 'who-i-am', color: '#06b6d4' }, // Cyan
+    { Component: TechJourney, name: 'Tech Stack', id: 'tech-journey', color: '#10b981' }, // Green/Emerald
+    { Component: NotableWork, name: 'Notable Work', id: 'notable-work', color: '#3b82f6' }, // Blue (dominant color)
+    { Component: Education, name: 'Academic Journey', id: 'education', color: '#a855f7' }, // Purple
+    { Component: WorkExperience, name: 'Work Experience', id: 'work-experience', color: '#22d3ee' }, // Cyan (from gradient)
+    { Component: BeyondCode, name: 'Beyond Code', id: 'beyond-code', color: '#8b5cf6' }, // Purple (DJ)
+    { Component: WhatsNext, name: "What's Next", id: 'whats-next', color: '#fbbf24' }, // Yellow/Amber
+    { Component: Contact, name: "Let's Connect", id: 'contact', color: '#10b981' }, // Green
   ];
 
   const [currentSection, setCurrentSection] = useState(0);
   const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set());
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   // Intersection Observer pro fade efekt
@@ -70,9 +71,14 @@ export default function App() {
     };
   }, []);
 
-  // Simple scroll tracking - which section is in view
+  // Simple scroll tracking - which section is in view (DISABLED when mobile menu is open)
   useEffect(() => {
     const handleScroll = () => {
+      // SKIP if mobile menu is open - prevents jumping
+      if (isMobileMenuOpen) {
+        return;
+      }
+      
       const scrollTop = window.scrollY;
       const windowHeight = window.innerHeight;
       
@@ -96,7 +102,7 @@ export default function App() {
     handleScroll(); // Initial
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [sections]);
+  }, [sections, isMobileMenuOpen]);
 
   useEffect(() => {
     // Set favicon
@@ -160,6 +166,7 @@ export default function App() {
           totalSections={sections.length}
           sectionNames={sections.map(s => s.name)}
           onSectionClick={scrollToSection}
+          onMenuStateChange={setIsMobileMenuOpen}
         />
       </div>
     </>

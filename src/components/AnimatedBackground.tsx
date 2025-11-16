@@ -102,7 +102,7 @@ export function AnimatedBackground() {
   const orbColor = `rgb(${interpolatedR}, ${interpolatedG}, ${interpolatedB})`;
   
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden bg-gray-950">
+    <div className="fixed inset-0 -z-10 overflow-hidden" style={{ backgroundColor: '#030712' }}>
       {/* ============ OPTIMALIZOVANÉ - 8 ORBŮ PRO PERFORMANCE ============ */}
       
       {/* ORB 1 - Top left corner */}

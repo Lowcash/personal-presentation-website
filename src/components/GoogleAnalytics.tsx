@@ -2,7 +2,7 @@
 // Uses VITE_GA_TRACKING_ID from .env
 
 export function GoogleAnalytics() {
-  const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_TRACKING_ID;
+  const GA_MEASUREMENT_ID = import.meta.env?.VITE_GA_TRACKING_ID;
 
   if (!GA_MEASUREMENT_ID) {
     console.warn('Google Analytics Measurement ID not found. Please set VITE_GA_TRACKING_ID in .env');

@@ -216,6 +216,8 @@ html {
   scrollbar-width: none;  /* Firefox */
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
+  background-color: #030712; /* Dark background - prevents white flash on overscroll */
+  overscroll-behavior: none; /* Prevents bounce effect on mobile */
 }
 
 /* HIDE SCROLLBAR - minimalistický look */
@@ -230,6 +232,8 @@ body::-webkit-scrollbar {
 body {
   -ms-overflow-style: none;
   scrollbar-width: none;
+  background-color: #030712; /* Dark background - prevents white flash on overscroll */
+  overscroll-behavior: none; /* Prevents bounce effect on mobile */
 }
 
 /* Performance optimizations for animations */

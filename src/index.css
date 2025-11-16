@@ -853,10 +853,6 @@
     background-color: var(--color-gray-600);
   }
 
-  .bg-gray-950 {
-    background-color: var(--color-gray-950);
-  }
-
   .bg-white\/5 {
     background-color: #ffffff0d;
   }
@@ -1429,16 +1425,6 @@
   }
 }
 
-:root {
-  --orb-r: 99;
-  --orb-g: 102;
-  --orb-b: 241;
-}
-
-.orb-1, .orb-2, .orb-3, .orb-4, .orb-5, .orb-6 {
-  transition: background .2s ease-out;
-}
-
 .orb-1 {
   background: radial-gradient(circle, rgba(var(--orb-r), var(--orb-g), var(--orb-b), .15) 0%, transparent 70%);
 }
@@ -1461,6 +1447,16 @@
 
 .orb-6 {
   background: radial-gradient(circle, rgba(var(--orb-r), var(--orb-g), var(--orb-b), .12) 0%, transparent 70%);
+}
+
+:root {
+  --orb-r: 99;
+  --orb-g: 102;
+  --orb-b: 241;
+}
+
+.orb-1, .orb-2, .orb-3, .orb-4, .orb-5, .orb-6 {
+  transition: background 16ms linear;
 }
 
 :root {
@@ -1560,6 +1556,8 @@ html {
   scrollbar-width: none;
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
+  overscroll-behavior: none;
+  background-color: #030712;
   overflow-x: hidden;
 }
 
@@ -1574,6 +1572,8 @@ body::-webkit-scrollbar {
 body {
   -ms-overflow-style: none;
   scrollbar-width: none;
+  overscroll-behavior: none;
+  background-color: #030712;
 }
 
 @media (prefers-reduced-motion: no-preference) {

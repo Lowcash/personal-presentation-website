@@ -18,15 +18,15 @@ import { useEffect, useState, useRef } from 'react';
 
 export default function App() {
   const sections = [
-    { Component: Hero, name: 'Hey', id: 'hero' },
+    { Component: Hero, name: 'Hey There', id: 'hero' },
     { Component: WhoIAm, name: 'Who I Am', id: 'who-i-am' },
-    { Component: TechJourney, name: 'My Stack', id: 'tech-journey' },
+    { Component: TechJourney, name: 'Tech Stack', id: 'tech-journey' },
     { Component: NotableWork, name: 'Notable Work', id: 'notable-work' },
-    { Component: Education, name: 'Education', id: 'education' },
-    { Component: WorkExperience, name: 'Experience', id: 'work-experience' },
+    { Component: Education, name: 'Academic Journey', id: 'education' },
+    { Component: WorkExperience, name: 'Work Experience', id: 'work-experience' },
     { Component: BeyondCode, name: 'Beyond Code', id: 'beyond-code' },
     { Component: WhatsNext, name: "What's Next", id: 'whats-next' },
-    { Component: Contact, name: 'Get in Touch', id: 'contact' },
+    { Component: Contact, name: "Let's Connect", id: 'contact' },
   ];
 
   const [currentSection, setCurrentSection] = useState(0);

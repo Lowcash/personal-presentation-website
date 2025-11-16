@@ -711,6 +711,10 @@
     animation: var(--animate-pulse);
   }
 
+  .cursor-grab {
+    cursor: grab;
+  }
+
   .cursor-pointer {
     cursor: pointer;
   }
@@ -1305,12 +1309,6 @@
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
 
-  .transition-transform {
-    transition-property: transform, translate, scale, rotate;
-    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
-    transition-duration: var(--tw-duration, var(--default-transition-duration));
-  }
-
   .duration-200 {
     --tw-duration: .2s;
     transition-duration: .2s;
@@ -1380,6 +1378,10 @@
     .hover\:text-white:hover {
       color: var(--color-white);
     }
+  }
+
+  .active\:cursor-grabbing:active {
+    cursor: grabbing;
   }
 
   @media (width >= 40rem) {

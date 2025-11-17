@@ -1,17 +1,19 @@
 import { ChevronDown } from 'lucide-react';
+import { SectionWrapper } from './shared/SectionWrapper';
+import { SECTION_STYLES } from '../lib/section-config';
 
 export function Hero() {
-  return (
-    <section className="relative h-screen flex items-center justify-center px-6">
-      {/* Removed background gradient - AnimatedBackground handles it */}
+  const { gradient, glowColors } = SECTION_STYLES.hero;
 
-      <div className="relative z-10 text-center px-4">
+  return (
+    <SectionWrapper id="hero" className="h-screen" containerClassName="max-w-6xl">
+      <div className="text-center px-4">
         {/* TITLE - WITH GRADIENT + MASIVNÍ GLOW */}
         <div className="py-8">
           <h1 
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl mb-6 pb-[5px] bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-transparent"
+            className={`text-4xl sm:text-5xl md:text-6xl lg:text-8xl mb-6 pb-[5px] ${gradient} bg-clip-text text-transparent`}
             style={{
-              filter: 'drop-shadow(0 0 12px rgba(168, 85, 247, 0.6)) drop-shadow(0 0 24px rgba(244, 114, 182, 0.4))',
+              filter: `drop-shadow(0 0 12px ${glowColors.primary}) drop-shadow(0 0 24px ${glowColors.secondary})`,
             }}
           >
             Hey, I'm Lukáš Machala
@@ -33,6 +35,6 @@ export function Hero() {
           <ChevronDown className="w-8 h-8 mx-auto text-gray-400" />
         </div>
       </div>
-    </section>
+    </SectionWrapper>
   );
 }

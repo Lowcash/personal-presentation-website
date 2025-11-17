@@ -1,7 +1,5 @@
 @custom-variant dark (&:is(.dark *));
 
-@import './orb-interpolation.css';
-
 /* Custom utilities */
 @layer utilities {
   /* Radial gradient for vignette effect */

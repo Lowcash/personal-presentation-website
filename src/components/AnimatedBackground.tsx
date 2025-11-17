@@ -1,19 +1,25 @@
 import { useEffect, useState, useRef } from 'react';
+import { ORB_COLORS } from '../lib/section-config';
+import { ANIMATION_CONFIG, SECTION_COUNT } from '../lib/constants';
 
-// 9 barevných breakpointů (na konkrétních % scroll stránky)
-const COLOR_BREAKPOINTS = [
-  { percent: 0, r: 99, g: 102, b: 241 },        // 0% - Welcome (indigo)
-  { percent: 12.5, r: 244, g: 63, b: 94 },      // 12.5% - Who I Am (rose)
-  { percent: 25, r: 139, g: 92, b: 246 },       // 25% - Tech Stack (violet)
-  { percent: 37.5, r: 236, g: 72, b: 153 },     // 37.5% - Notable Work (pink)
-  { percent: 50, r: 34, g: 211, b: 238 },       // 50% - Education (cyan)
-  { percent: 62.5, r: 234, g: 179, b: 8 },      // 62.5% - Experience (amber)
-  { percent: 75, r: 52, g: 211, b: 153 },       // 75% - Beyond Code (emerald)
-  { percent: 87.5, r: 168, g: 85, b: 247 },     // 87.5% - What's Next (purple)
-  { percent: 100, r: 59, g: 130, b: 246 },      // 100% - Contact (blue)
-];
+/**
+ * Generate color breakpoints dynamically based on section count
+ * Each section gets equal percentage space (100% / 9 sections = ~11.11% each)
+ */
+const generateColorBreakpoints = () => {
+  const percentPerSection = 100 / (SECTION_COUNT - 1); // 9 sections = 8 segments
+  
+  return ORB_COLORS.map((color, index) => ({
+    percent: index * percentPerSection,
+    ...color
+  }));
+};
 
-// Linear interpolation helper
+const COLOR_BREAKPOINTS = generateColorBreakpoints();
+
+/**
+ * Linear interpolation helper
+ */
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
@@ -46,15 +52,12 @@ export function AnimatedBackground() {
       setSmoothScrollPercent(prev => {
         const diff = targetScrollPercent - prev;
         
-        // Smooth easing factor
-        const easing = 0.1;
-        
         // Pokud je rozdíl malý, snap to target
-        if (Math.abs(diff) < 0.01) {
+        if (Math.abs(diff) < ANIMATION_CONFIG.SMOOTH_SCROLL_SNAP_THRESHOLD) {
           return targetScrollPercent;
         }
         
-        return prev + diff * easing;
+        return prev + diff * ANIMATION_CONFIG.SMOOTH_SCROLL_EASING;
       });
       
       rafRef.current = requestAnimationFrame(animate);
@@ -69,12 +72,19 @@ export function AnimatedBackground() {
     };
   }, [targetScrollPercent]);
 
-  // Najít aktuální segment (0-7)
-  const segmentIndex = Math.min(7, Math.floor(smoothScrollPercent / 12.5));
+  // Calculate segment (0 to SECTION_COUNT-2, so 0-7 for 9 sections)
+  const percentPerSegment = 100 / (SECTION_COUNT - 1); // ~12.5% per segment
+  const segmentIndex = Math.min(
+    SECTION_COUNT - 2, 
+    Math.floor(smoothScrollPercent / percentPerSegment)
+  );
   
-  // Lokální progress v aktuálním segmentu (0-1)
-  const segmentStart = segmentIndex * 12.5;
-  const segmentProgress = Math.min(1, Math.max(0, (smoothScrollPercent - segmentStart) / 12.5));
+  // Local progress within current segment (0-1)
+  const segmentStart = segmentIndex * percentPerSegment;
+  const segmentProgress = Math.min(
+    1, 
+    Math.max(0, (smoothScrollPercent - segmentStart) / percentPerSegment)
+  );
   
   // Barvy pro aktuální segment
   const colorFrom = COLOR_BREAKPOINTS[segmentIndex];
@@ -102,7 +112,7 @@ export function AnimatedBackground() {
   const orbColor = `rgb(${interpolatedR}, ${interpolatedG}, ${interpolatedB})`;
   
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden" style={{ backgroundColor: '#030712' }}>
+    <div className="fixed inset-0 overflow-hidden" style={{ backgroundColor: '#030712' }}>
       {/* ============ OPTIMALIZOVANÉ - 8 ORBŮ PRO PERFORMANCE ============ */}
       
       {/* ORB 1 - Top left corner */}

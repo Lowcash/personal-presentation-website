@@ -4,8 +4,8 @@
 export function GoogleAnalytics() {
   const GA_MEASUREMENT_ID = import.meta.env?.VITE_GA_TRACKING_ID;
 
+  // Silently return null if not configured (optional feature)
   if (!GA_MEASUREMENT_ID) {
-    console.warn('Google Analytics Measurement ID not found. Please set VITE_GA_TRACKING_ID in .env');
     return null;
   }
 

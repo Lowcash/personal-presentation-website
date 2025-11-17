@@ -15,6 +15,7 @@ import { GoogleAnalytics } from './components/GoogleAnalytics';
 import { AnimatedBackground } from './components/AnimatedBackground';
 import { ParallaxSection } from './components/ParallaxSection';
 import { DebugInfo } from './components/DebugInfo';
+import { EasterEggs } from './components/EasterEggs';
 import { ANIMATION_CONFIG } from './lib/constants';
 import { useEffect, useState, useRef } from 'react';
 
@@ -143,27 +144,39 @@ export default function App() {
     <>
       <MetaTags />
       <GoogleAnalytics />
+      <EasterEggs />
+      
+      {/* Skip to main content - accessibility */}
+      <a href="#main-content" className="skip-to-content">
+        Skip to main content
+      </a>
       
       {/* ANIMATED BACKGROUND - čistě od scroll pozice */}
       <AnimatedBackground />
       
-      <div className="text-white" style={{ background: 'transparent' }}>
-        <ScrollProgress />
+      <div className="text-white" style={{ background: 'transparent' }} role="document">
+        <ScrollProgress aria-hidden="true" />
         
-        {/* All sections - scroll snap + fade + parallax effect */}
-        {sections.map(({ Component, id }) => (
-          <ParallaxSection
-            key={id}
-            id={id}
-            className="min-h-screen"
-            style={{ 
-              scrollSnapAlign: 'start',
-              opacity: visibleSections.has(id) ? 1 : 0.05
-            }}
-          >
-            <Component />
-          </ParallaxSection>
-        ))}
+        {/* Main content - semantic HTML */}
+        <main id="main-content" role="main">
+          {/* All sections - scroll snap + fade + parallax effect */}
+          {sections.map(({ Component, id }, index) => (
+            <ParallaxSection
+              key={id}
+              id={id}
+              className="min-h-screen"
+              style={{ 
+                scrollSnapAlign: 'start',
+                opacity: visibleSections.has(id) ? 1 : 0.05
+              }}
+              // Accessibility: section landmarks
+              role={index === 0 ? 'banner' : 'region'}
+              aria-label={sections[index].name}
+            >
+              <Component />
+            </ParallaxSection>
+          ))}
+        </main>
         
         <ScrollToTop 
           currentSection={currentSection}

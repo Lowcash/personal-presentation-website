@@ -389,42 +389,8 @@ export function AnimatedBackground() {
           height: '600px',
           filter: 'blur(95px)',
           opacity: 0.14 * orbBrightness,
-          background: orbColor5, // Hue -20°
+          background: orbColor5, // Hue -120°
           animation: `orb-float-mobile-1 ${35 / animationSpeed}s ease-in-out infinite`,
-          willChange: 'transform, filter',
-        }}
-      />
-      
-      {/* Middle-upper - mobile */}
-      <div 
-        className="absolute rounded-full md:hidden"
-        style={{
-          top: '35%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '550px',
-          height: '550px',
-          filter: 'blur(90px)',
-          opacity: 0.12 * orbBrightness,
-          background: orbColor6, // Hue +20°
-          animation: `orb-float-mobile-2 ${30 / animationSpeed}s ease-in-out infinite`,
-          willChange: 'transform, filter',
-        }}
-      />
-      
-      {/* Middle-lower - mobile */}
-      <div 
-        className="absolute rounded-full md:hidden"
-        style={{
-          top: '65%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '550px',
-          height: '550px',
-          filter: 'blur(90px)',
-          opacity: 0.12 * orbBrightness,
-          background: orbColor3, // Hue -10°
-          animation: `orb-float-mobile-1 ${38 / animationSpeed}s ease-in-out infinite reverse`,
           willChange: 'transform, filter',
         }}
       />
@@ -440,7 +406,7 @@ export function AnimatedBackground() {
           height: '600px',
           filter: 'blur(95px)',
           opacity: 0.14 * orbBrightness,
-          background: orbColor4, // Hue +10°
+          background: orbColor6, // Hue +120°
           animation: `orb-float-mobile-2 ${32 / animationSpeed}s ease-in-out infinite reverse`,
           willChange: 'transform, filter',
         }}

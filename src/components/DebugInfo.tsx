@@ -1,11 +1,31 @@
 import { useEffect, useState, useRef } from 'react';
-import { Terminal } from 'lucide-react';
+import { Terminal, Trophy } from 'lucide-react';
+import type { Achievement } from './EasterEggs';
 
 /**
  * Debug component - Easter egg for developers
  * Toggle with "D" key
  * Only available in development mode or when manually enabled
  */
+
+// Achievement hints (how to unlock)
+const ACHIEVEMENT_HINTS: Record<string, string> = {
+  'triple-click': 'Triple-click the hero heading',
+  'perfectly-balanced': 'Scroll to exactly 50% of the page',
+  'patience': 'Stay idle for 60 seconds',
+  'rapid-clicker': 'Click 10 times in 2 seconds',
+  'copy-cat': 'Copy some text from the page',
+  'april-fools': 'Visit on April 1st', // Don't mention URL param
+  'konami': 'Enter the Konami Code',
+  'shake': 'Shake your device or move mouse rapidly',
+  'night-owl': 'Visit between midnight and 5 AM',
+  'early-bird': 'Visit between 5 AM and 8 AM',
+  'workaholic': 'Visit on the weekend',
+  'marathon-runner': 'Scroll a total of 10,000 pixels',
+  'speed-reader': 'Reach the bottom in under 2 minutes',
+  'repeat-visitor': 'Visit the site 3+ times',
+};
+
 export function DebugInfo() {
   const [isVisible, setIsVisible] = useState(false);
   const [scrollPercent, setScrollPercent] = useState(0);
@@ -14,12 +34,47 @@ export function DebugInfo() {
   const [orbB, setOrbB] = useState(0);
   const [fps, setFps] = useState(60);
   
+  // Achievements state
+  const [achievements, setAchievements] = useState<Achievement[]>(() => {
+    const saved = localStorage.getItem('achievements');
+    return saved ? JSON.parse(saved) : [];
+  });
+  
+  // Tooltip state
+  const [tooltip, setTooltip] = useState<{ achievement: Achievement; show: boolean } | null>(null);
+  const tooltipTimeoutRef = useRef<NodeJS.Timeout>();
+
   // Drag & drop state
-  const [position, setPosition] = useState<'bottom-left' | 'bottom-right' | 'top-left' | 'top-right'>(() => {
-    return (localStorage.getItem('debug_position') as any) || 'bottom-left';
+  const [position, setPosition] = useState<{ x: number; y: number }>(() => {
+    const saved = localStorage.getItem('debug_position');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Check if it's the new format (has xPercent/yPercent)
+        if (typeof parsed === 'object' && parsed.xPercent !== undefined && parsed.yPercent !== undefined) {
+          return {
+            x: (parsed.xPercent / 100) * window.innerWidth,
+            y: (parsed.yPercent / 100) * window.innerHeight
+          };
+        }
+        // Old format (string like "bottom-left") - clear it and use default
+        localStorage.removeItem('debug_position');
+      } catch (e) {
+        // Invalid JSON - clear it
+        localStorage.removeItem('debug_position');
+      }
+    }
+    // Default: bottom-left corner
+    return { x: 16, y: window.innerHeight - 500 }; // 500 = approximate panel height
   });
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [scale, setScale] = useState(() => {
+    const saved = localStorage.getItem('debug_scale');
+    return saved ? parseFloat(saved) : 1.25; // Default 125% (displayed as ~156%)
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, scale: 1 });
   const panelRef = useRef<HTMLDivElement>(null);
   
   // Easter egg settings
@@ -33,7 +88,7 @@ export function DebugInfo() {
     return parseFloat(localStorage.getItem('animation_speed') || '1.5'); // Changed default to 1.5x
   });
   const [colorVariation, setColorVariation] = useState(() => {
-    return parseFloat(localStorage.getItem('color_variation') || '100');
+    return parseFloat(localStorage.getItem('color_variation') || '50'); // CHANGED default to 50%
   });
 
   // Only render in development OR if manually enabled via localStorage
@@ -77,13 +132,42 @@ export function DebugInfo() {
 
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === 'd' || e.key === 'D') {
-        setIsVisible(prev => !prev);
+        setIsVisible(prev => {
+          const newVal = !prev;
+          // Mark dev console as opened (enables achievement system)
+          if (newVal) {
+            localStorage.setItem('dev_console_opened', 'true');
+            console.log(
+              '%c🎮 Achievement system activated!',
+              'color: #10b981; font-size: 12px; font-weight: bold;'
+            );
+          }
+          return newVal;
+        });
       }
     };
 
-    window.addEventListener('keypress', handleKeyPress);
-    return () => window.removeEventListener('keypress', handleKeyPress);
-  }, [isEnabled]);
+    // Mobile: 4-finger tap to toggle
+    let touchCount = 0;
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 4) {
+        touchCount++;
+        if (touchCount === 1) {
+          setIsVisible(prev => !prev);
+          // Reset after 500ms
+          setTimeout(() => { touchCount = 0; }, 500);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    window.addEventListener('touchstart', handleTouchStart);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+      window.removeEventListener('touchstart', handleTouchStart);
+    };
+  }, []);
 
   // Track scroll and orb colors
   useEffect(() => {
@@ -128,26 +212,72 @@ export function DebugInfo() {
     };
   }, []);
 
+  // Listen for achievement updates
+  useEffect(() => {
+    const handleAchievementsUpdate = (e: CustomEvent) => {
+      setAchievements(e.detail.achievements);
+    };
+
+    window.addEventListener('achievements-updated' as any, handleAchievementsUpdate);
+    
+    // Load initial achievements
+    const saved = localStorage.getItem('achievements');
+    if (saved) {
+      setAchievements(JSON.parse(saved));
+    }
+
+    return () => {
+      window.removeEventListener('achievements-updated' as any, handleAchievementsUpdate);
+    };
+  }, []);
+
   // Click outside to close
   useEffect(() => {
     if (!isVisible) return;
 
-    const handleClickOutside = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        setIsVisible(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    // REMOVED - no longer close on click outside
+    // User must click the X button to close
   }, [isVisible]);
 
   // Drag & drop handlers
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).tagName !== 'BUTTON' && 
         (e.target as HTMLElement).tagName !== 'INPUT') {
+      
+      // Get button positions to avoid drag conflicts
+      const isMobile = window.innerWidth < 768;
+      const hamburgerRect = { top: 24, right: 24, width: 56, height: 56 }; // top-6 right-6 + button size
+      const scrollToTopRect = { bottom: 32, right: 32, width: 56, height: 56 }; // bottom-8 right-8 + button size
+      
+      // Check if click is in "forbidden zones"
+      const clickX = e.clientX;
+      const clickY = e.clientY;
+      const winWidth = window.innerWidth;
+      const winHeight = window.innerHeight;
+      
+      // Hamburger zone (top-right on mobile, but we still check on desktop for consistency)
+      const inHamburgerZone = isMobile && (
+        clickX > winWidth - hamburgerRect.right - hamburgerRect.width &&
+        clickX < winWidth - hamburgerRect.right + hamburgerRect.width &&
+        clickY > hamburgerRect.top - hamburgerRect.height &&
+        clickY < hamburgerRect.top + hamburgerRect.height
+      );
+      
+      // Scroll-to-top zone (bottom-right)
+      const inScrollToTopZone = (
+        clickX > winWidth - scrollToTopRect.right - scrollToTopRect.width &&
+        clickX < winWidth - scrollToTopRect.right + scrollToTopRect.width &&
+        clickY > winHeight - scrollToTopRect.bottom - scrollToTopRect.height &&
+        clickY < winHeight - scrollToTopRect.bottom + scrollToTopRect.height
+      );
+      
+      // Don't start drag if in forbidden zones
+      if (inHamburgerZone || inScrollToTopZone) {
+        return;
+      }
+      
       setIsDragging(true);
-      setDragStart({ x: e.clientX, y: e.clientY });
+      setDragOffset({ x: e.clientX - position.x, y: e.clientY - position.y });
     }
   };
 
@@ -159,22 +289,14 @@ export function DebugInfo() {
     document.body.style.cursor = 'grabbing';
 
     const handleMouseMove = (e: MouseEvent) => {
-      const dx = e.clientX - dragStart.x;
-      const dy = e.clientY - dragStart.y;
-      
-      // Simple threshold to detect drag direction
-      if (Math.abs(dx) > 50 || Math.abs(dy) > 50) {
-        // Determine new position based on quadrant
-        const isLeft = e.clientX < window.innerWidth / 2;
-        const isTop = e.clientY < window.innerHeight / 2;
+      // Use requestAnimationFrame for smooth 60fps dragging
+      requestAnimationFrame(() => {
+        const newX = e.clientX - dragOffset.x;
+        const newY = e.clientY - dragOffset.y;
         
-        const newPos = isTop 
-          ? (isLeft ? 'top-left' : 'top-right')
-          : (isLeft ? 'bottom-left' : 'bottom-right');
-        
-        setPosition(newPos);
-        localStorage.setItem('debug_position', newPos);
-      }
+        // Update position immediately with no threshold
+        setPosition({ x: newX, y: newY });
+      });
     };
 
     const handleMouseUp = () => {
@@ -193,7 +315,107 @@ export function DebugInfo() {
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     };
-  }, [isDragging, dragStart]);
+  }, [isDragging, dragOffset]);
+
+  // Save position on drag end
+  useEffect(() => {
+    if (!isDragging) {
+      const xPercent = (position.x / window.innerWidth) * 100;
+      const yPercent = (position.y / window.innerHeight) * 100;
+      localStorage.setItem('debug_position', JSON.stringify({ xPercent, yPercent }));
+    }
+  }, [isDragging, position]);
+
+  // Resize handlers
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).tagName !== 'BUTTON' && 
+        (e.target as HTMLElement).tagName !== 'INPUT') {
+      
+      // Get button positions to avoid drag conflicts
+      const isMobile = window.innerWidth < 768;
+      const hamburgerRect = { top: 24, right: 24, width: 56, height: 56 }; // top-6 right-6 + button size
+      const scrollToTopRect = { bottom: 32, right: 32, width: 56, height: 56 }; // bottom-8 right-8 + button size
+      
+      // Check if click is in "forbidden zones"
+      const clickX = e.clientX;
+      const clickY = e.clientY;
+      const winWidth = window.innerWidth;
+      const winHeight = window.innerHeight;
+      
+      // Hamburger zone (top-right on mobile, but we still check on desktop for consistency)
+      const inHamburgerZone = isMobile && (
+        clickX > winWidth - hamburgerRect.right - hamburgerRect.width &&
+        clickX < winWidth - hamburgerRect.right + hamburgerRect.width &&
+        clickY > hamburgerRect.top - hamburgerRect.height &&
+        clickY < hamburgerRect.top + hamburgerRect.height
+      );
+      
+      // Scroll-to-top zone (bottom-right)
+      const inScrollToTopZone = (
+        clickX > winWidth - scrollToTopRect.right - scrollToTopRect.width &&
+        clickX < winWidth - scrollToTopRect.right + scrollToTopRect.width &&
+        clickY > winHeight - scrollToTopRect.bottom - scrollToTopRect.height &&
+        clickY < winHeight - scrollToTopRect.bottom + scrollToTopRect.height
+      );
+      
+      // Don't start drag if in forbidden zones
+      if (inHamburgerZone || inScrollToTopZone) {
+        return;
+      }
+      
+      setIsResizing(true);
+      setResizeStart({ x: e.clientX, y: e.clientY, scale });
+    }
+  };
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    // Prevent text selection while resizing
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'nesw-resize';
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // Use requestAnimationFrame for smooth 60fps resizing
+      requestAnimationFrame(() => {
+        const deltaX = e.clientX - resizeStart.x;
+        const deltaY = e.clientY - resizeStart.y;
+        
+        // Calculate new scale based on diagonal movement
+        const newScale = resizeStart.scale + (deltaX + deltaY) / 100;
+        
+        // Clamp scale between 0.5 and 1.5
+        const clampedScale = Math.max(0.5, Math.min(1.5, newScale));
+        
+        // Update scale immediately with no threshold
+        setScale(clampedScale);
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      // Restore text selection
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+  }, [isResizing, resizeStart]);
+
+  // Save scale on resize end
+  useEffect(() => {
+    if (!isResizing) {
+      localStorage.setItem('debug_scale', String(scale));
+    }
+  }, [isResizing, scale]);
 
   // Don't render at all if not enabled
   if (!isEnabled) {
@@ -203,16 +425,20 @@ export function DebugInfo() {
   if (!isVisible) {
     return (
       <div 
-        className={`fixed z-50 opacity-20 hover:opacity-100 transition-opacity cursor-pointer ${
-          position === 'top-left' ? 'top-4 left-4' :
-          position === 'top-right' ? 'top-4 right-4' :
-          position === 'bottom-right' ? 'bottom-4 right-4' :
-          'bottom-4 left-4'
-        }`}
-        onClick={() => setIsVisible(true)}
+        className="fixed z-[70] bottom-4 left-4 opacity-20 hover:opacity-100 transition-opacity cursor-pointer"
+        onClick={() => {
+          setIsVisible(true);
+          // Mark dev console as opened (enables achievement system)
+          localStorage.setItem('dev_console_opened', 'true');
+          console.log(
+            '%c🎮 Achievement system activated!',
+            'color: #10b981; font-size: 12px; font-weight: bold;'
+          );
+        }}
         title="Press 'D' to toggle debug info"
+        aria-label="Toggle debug console"
       >
-        <Terminal className="w-6 h-6 text-gray-400" />
+        <Terminal className="w-6 h-6 text-gray-400" aria-hidden="true" />
       </div>
     );
   }
@@ -220,13 +446,13 @@ export function DebugInfo() {
   return (
     <div 
       ref={panelRef}
-      className={`fixed z-50 font-mono text-xs transition-all ${
-        position === 'top-left' ? 'top-4 left-4' :
-        position === 'top-right' ? 'top-4 right-4' :
-        position === 'bottom-right' ? 'bottom-4 right-4' :
-        'bottom-4 left-4'
-      } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+      className={`fixed z-[70] font-mono text-xs transition-all ${
+        isDragging ? 'cursor-grabbing' : 'cursor-grab'
+      }`}
       onMouseDown={handleMouseDown}
+      role="region"
+      aria-label="Developer debug console"
+      style={{ left: `${position.x}px`, top: `${position.y}px`, transform: `scale(${scale})` }}
     >
       {/* Cyber/retro styled panel */}
       <div 
@@ -377,6 +603,30 @@ export function DebugInfo() {
               />
             </div>
             
+            {/* Scale Slider - RESIZABLE CONSOLE */}
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-gray-400 text-[10px]">CONSOLE SCALE:</span>
+                <span className="text-white tabular-nums text-[10px]">{((scale / 0.8) * 100).toFixed(0)}%</span>
+              </div>
+              <input
+                type="range"
+                min="0.4"
+                max="1.2"
+                step="0.05"
+                value={scale}
+                onChange={(e) => {
+                  const newScale = parseFloat(e.target.value);
+                  setScale(newScale);
+                  localStorage.setItem('debug_scale', String(newScale));
+                }}
+                className="w-full h-1.5 bg-gray-800 rounded-full appearance-none cursor-pointer"
+                style={{
+                  accentColor: `rgb(${orbR}, ${orbG}, ${orbB})`
+                }}
+              />
+            </div>
+            
             {/* Vignette Style Radio */}
             <div>
               <div className="text-gray-400 text-[10px] mb-1.5">VIGNETTE STYLE:</div>
@@ -414,7 +664,7 @@ export function DebugInfo() {
                   brightness: 0.5,
                   vignette: 'minimal',
                   speed: 1.5,
-                  variation: 100
+                  variation: 50  // CHANGED default to 50%
                 };
                 
                 setOrbBrightness(defaults.brightness);
@@ -432,11 +682,147 @@ export function DebugInfo() {
             >
               RESET TO DEFAULT
             </button>
+            
+            {/* Reset Achievements Button - DEV ONLY */}
+            <button
+              onClick={() => {
+                if (confirm('⚠️ Reset all achievements? This cannot be undone!')) {
+                  // Clear localStorage
+                  localStorage.removeItem('achievements');
+                  
+                  // Clear local state
+                  setAchievements([]);
+                  
+                  // Dispatch event to notify EasterEggs component
+                  window.dispatchEvent(new CustomEvent('achievements-reset'));
+                  
+                  // Show confirmation message
+                  console.log(
+                    '%c🔄 Achievements reset! All achievements cleared.',
+                    'color: #ef4444; font-size: 14px; font-weight: bold;'
+                  );
+                }
+              }}
+              className="w-full px-3 py-1.5 text-[10px] text-red-400 hover:text-red-300 border border-red-700 hover:border-red-500 rounded transition-all"
+            >
+              RESET ACHIEVEMENTS
+            </button>
+          </div>
+
+          {/* DIVIDER */}
+          <div className="border-t-2 border-gray-800 my-3" style={{ borderColor: `rgba(${orbR}, ${orbG}, ${orbB}, 0.3)` }} />
+
+          {/* ACHIEVEMENTS SECTION */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Trophy className="w-3 h-3 text-yellow-400" />
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Achievements</span>
+              <span className="text-[10px] text-gray-600">
+                {achievements.filter(a => a.unlocked).length}/{achievements.length}
+              </span>
+            </div>
+            
+            {achievements.length > 0 ? (
+              <div className="grid grid-cols-4 gap-1.5 relative">
+                {achievements.map((achievement) => (
+                  <div
+                    key={achievement.id}
+                    className={`aspect-square flex items-center justify-center text-xl rounded border-2 transition-all cursor-pointer ${
+                      achievement.unlocked 
+                        ? 'border-yellow-400/50 bg-yellow-400/10' 
+                        : 'border-gray-700 bg-gray-800/30 grayscale opacity-30'
+                    }`}
+                    onMouseEnter={() => {
+                      // Desktop: hover to show tooltip
+                      setTooltip({ achievement, show: true });
+                    }}
+                    onMouseLeave={() => {
+                      // Desktop: hide tooltip on mouse leave
+                      if (tooltipTimeoutRef.current) {
+                        clearTimeout(tooltipTimeoutRef.current);
+                      }
+                      setTooltip(null);
+                    }}
+                    onClick={() => {
+                      // Mobile: click to toggle tooltip
+                      if (tooltip?.achievement.id === achievement.id) {
+                        setTooltip(null);
+                      } else {
+                        setTooltip({ achievement, show: true });
+                        // Auto-hide after 3 seconds on mobile
+                        if (tooltipTimeoutRef.current) {
+                          clearTimeout(tooltipTimeoutRef.current);
+                        }
+                        tooltipTimeoutRef.current = setTimeout(() => {
+                          setTooltip(null);
+                        }, 3000);
+                      }
+                    }}
+                  >
+                    {achievement.unlocked ? achievement.icon : '🔒'}
+                  </div>
+                ))}
+                
+                {/* Tooltip */}
+                {tooltip && (
+                  <div 
+                    className="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full z-10 pointer-events-none"
+                    style={{
+                      animation: 'fadeIn 0.2s ease-out'
+                    }}
+                  >
+                    <div 
+                      className="bg-gray-900 border-2 rounded-lg p-2 shadow-2xl min-w-[200px] max-w-[240px]"
+                      style={{
+                        borderColor: tooltip.achievement.unlocked 
+                          ? `rgb(${orbR}, ${orbG}, ${orbB})` 
+                          : 'rgb(107, 114, 128)',
+                        boxShadow: tooltip.achievement.unlocked
+                          ? `0 0 20px rgba(${orbR}, ${orbG}, ${orbB}, 0.4)`
+                          : '0 4px 6px rgba(0, 0, 0, 0.3)'
+                      }}
+                    >
+                      <div className="flex items-start gap-2 mb-1">
+                        <span className="text-lg">{tooltip.achievement.icon}</span>
+                        <div className="flex-1">
+                          <div className={`text-[10px] font-semibold ${
+                            tooltip.achievement.unlocked ? 'text-yellow-400' : 'text-gray-400'
+                          }`}>
+                            {tooltip.achievement.unlocked ? tooltip.achievement.name : '???'}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-[9px] text-gray-400 mt-1">
+                        {tooltip.achievement.unlocked 
+                          ? tooltip.achievement.description
+                          : ACHIEVEMENT_HINTS[tooltip.achievement.id] || 'Keep exploring...'}
+                      </div>
+                    </div>
+                    {/* Arrow */}
+                    <div 
+                      className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0"
+                      style={{
+                        borderLeft: '6px solid transparent',
+                        borderRight: '6px solid transparent',
+                        borderTop: `6px solid ${tooltip.achievement.unlocked 
+                          ? `rgb(${orbR}, ${orbG}, ${orbB})` 
+                          : 'rgb(107, 114, 128)'}`
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-[10px] text-gray-600 text-center py-2">
+                No achievements yet. Keep exploring!
+              </div>
+            )}
           </div>
 
           {/* Hint */}
           <div className="pt-2 border-t border-gray-800 text-gray-500 text-center">
-            Press 'D' to toggle
+            <div className="hidden md:block">Press 'D' to toggle</div>
+            <div className="md:hidden text-[9px]">4-finger tap to toggle</div>
           </div>
         </div>
       </div>

@@ -191,47 +191,70 @@ export function ScrollNavigation({ currentSection, totalSections, sectionNames, 
   return (
     <>
       {/* DESKTOP - Right side vertical dots */}
-      <div className="hidden md:block fixed right-8 top-1/2 -translate-y-1/2 z-50">
+      <nav 
+        className="hidden md:block fixed right-8 top-1/2 -translate-y-1/2 z-50"
+        aria-label="Page navigation"
+        role="navigation"
+      >
         <div className="flex flex-col gap-4">
           {sections.map((section) => (
             <button
               key={section.id}
               onClick={() => onSectionClick(section.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSectionClick(section.id);
+                }
+              }}
               className="group relative cursor-pointer flex items-center justify-center w-3 h-3"
-              aria-label={`Scroll to ${section.label}`}
+              aria-label={`Navigate to ${section.label}`}
+              aria-current={currentSection === section.id ? 'true' : 'false'}
             >
               {/* Dot - CSS CLASSES pro barvu */}
               <div 
                 className={`rounded-full transition-all duration-300 ${
                   currentSection === section.id ? 'scroll-nav-dot-active w-3 h-3' : 'scroll-nav-dot-inactive w-2 h-2'
                 }`}
+                aria-hidden="true"
               />
               
               {/* Tooltip on hover - minimalist */}
-              <div className="absolute right-6 top-1/2 -translate-y-1/2 bg-black/90 backdrop-blur-sm rounded px-2 py-1 text-xs text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+              <div 
+                className="absolute right-6 top-1/2 -translate-y-1/2 bg-black/90 backdrop-blur-sm rounded px-2 py-1 text-xs text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none"
+                aria-hidden="true"
+              >
                 {section.label}
               </div>
             </button>
           ))}
         </div>
-      </div>
+      </nav>
 
       {/* MOBILE - Hamburger button (top-right) with dynamic glow */}
       <button
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setMobileMenuOpen(!mobileMenuOpen);
+          }
+        }}
         className="md:hidden fixed top-6 right-6 z-[60] transition-all duration-300 hover:scale-105"
-        aria-label="Toggle menu"
+        aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+        aria-expanded={mobileMenuOpen}
+        aria-controls="mobile-navigation-menu"
       >
         <div className="relative group">
           {/* Shimmer glow layer - same as scroll-to-top */}
-          <div className="absolute inset-0 pointer-events-none rounded-xl animate-glow-shimmer -z-10 scroll-to-top-glow" />
+          <div className="absolute inset-0 pointer-events-none rounded-xl animate-glow-shimmer -z-10 scroll-to-top-glow" aria-hidden="true" />
           
           {/* Button - same styling as scroll-to-top */}
           <div className="bg-black/40 backdrop-blur-sm rounded-xl p-3 transition-all duration-500 scroll-to-top-inner">
             {mobileMenuOpen ? (
-              <X className="w-6 h-6 scroll-to-top-icon" />
+              <X className="w-6 h-6 scroll-to-top-icon" aria-hidden="true" />
             ) : (
-              <Menu className="w-6 h-6 scroll-to-top-icon" />
+              <Menu className="w-6 h-6 scroll-to-top-icon" aria-hidden="true" />
             )}
           </div>
         </div>
@@ -242,6 +265,7 @@ export function ScrollNavigation({ currentSection, totalSections, sectionNames, 
         className={`md:hidden fixed inset-0 z-[55] transition-all duration-300 ${
           mobileMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'
         }`}
+        aria-hidden={!mobileMenuOpen}
       >
         {/* Backdrop */}
         <div 
@@ -249,14 +273,18 @@ export function ScrollNavigation({ currentSection, totalSections, sectionNames, 
             mobileMenuOpen ? 'opacity-100' : 'opacity-0'
           }`}
           onClick={() => setMobileMenuOpen(false)}
+          aria-label="Close menu backdrop"
         />
         
         {/* Menu panel - slide from bottom with swipe support */}
-        <div 
+        <nav 
+          id="mobile-navigation-menu"
           ref={drawerRef}
           className={`absolute bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl rounded-t-3xl transition-all duration-300 touch-pan-y ${
             mobileMenuOpen ? 'translate-y-0' : 'translate-y-full'
           }`}
+          aria-label="Mobile navigation"
+          role="navigation"
           style={{
             boxShadow: '0 -10px 60px rgba(139, 92, 246, 0.3)',
             transform: mobileMenuOpen 
@@ -338,7 +366,7 @@ export function ScrollNavigation({ currentSection, totalSections, sectionNames, 
               })}
             </div>
           </div>
-        </div>
+        </nav>
       </div>
     </>
   );

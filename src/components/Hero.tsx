@@ -9,7 +9,7 @@ export function Hero() {
     <SectionWrapper id="hero" className="h-screen" containerClassName="max-w-6xl">
       <div className="text-center px-4">
         {/* TITLE - WITH GRADIENT + MASIVNÍ GLOW */}
-        <div className="py-8">
+        <header className="py-8">
           <h1 
             className={`text-4xl sm:text-5xl md:text-6xl lg:text-8xl mb-6 pb-[5px] ${gradient} bg-clip-text text-transparent`}
             style={{
@@ -18,7 +18,7 @@ export function Hero() {
           >
             Hey, I'm Lukáš Machala
           </h1>
-        </div>
+        </header>
 
         {/* SUBTITLE - NO EFFECTS */}
         <div>
@@ -31,7 +31,7 @@ export function Hero() {
         </div>
 
         {/* SCROLL INDICATOR - WITH BOUNCE ANIMATION */}
-        <div className="mt-16 animate-bounce">
+        <div className="mt-16 animate-bounce" aria-hidden="true">
           <ChevronDown className="w-8 h-8 mx-auto text-gray-400" />
         </div>
       </div>

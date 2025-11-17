@@ -1,9 +1,12 @@
 import { useEffect } from 'react';
-import ogImageUrl from 'figma:asset/8b5160d304efdec22096e51a6e51479100c0dcc7.png';
 
 // Meta tags for SEO - sets document metadata
 export function MetaTags() {
   useEffect(() => {
+    // OG Image URL - using absolute URL for social media crawlers
+    // Image should be placed at /public/og-image.png (1200x630px)
+    const ogImageUrl = 'https://lowcash.dev/og-image.png';
+
     // Set document title
     document.title = "Lukáš Machala - Fullstack Developer & Software Architect";
 

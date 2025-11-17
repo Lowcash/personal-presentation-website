@@ -24,10 +24,101 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
+/**
+ * Convert RGB to HSL, shift hue AND boost saturation for visible color differences
+ */
+function shiftHue(r: number, g: number, b: number, hueDelta: number): string {
+  // Normalize RGB to 0-1
+  const rNorm = r / 255;
+  const gNorm = g / 255;
+  const bNorm = b / 255;
+  
+  const max = Math.max(rNorm, gNorm, bNorm);
+  const min = Math.min(rNorm, gNorm, bNorm);
+  const delta = max - min;
+  
+  let h = 0;
+  let l = (max + min) / 2;
+  let s = delta === 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+  
+  if (delta !== 0) {
+    if (max === rNorm) {
+      h = 60 * (((gNorm - bNorm) / delta) % 6);
+    } else if (max === gNorm) {
+      h = 60 * ((bNorm - rNorm) / delta + 2);
+    } else {
+      h = 60 * ((rNorm - gNorm) / delta + 4);
+    }
+  }
+  
+  // Shift hue
+  h = (h + hueDelta) % 360;
+  if (h < 0) h += 360;
+  
+  // BOOST SATURATION for visible differences (multiply by 1.8, cap at 1.0)
+  s = Math.min(1.0, s * 1.8);
+  
+  // BOOST LIGHTNESS slightly to make colors more vibrant
+  l = Math.min(0.65, l * 1.15);
+  
+  // Convert back to RGB
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  const m = l - c / 2;
+  
+  let rOut = 0, gOut = 0, bOut = 0;
+  
+  if (h < 60) {
+    rOut = c; gOut = x; bOut = 0;
+  } else if (h < 120) {
+    rOut = x; gOut = c; bOut = 0;
+  } else if (h < 180) {
+    rOut = 0; gOut = c; bOut = x;
+  } else if (h < 240) {
+    rOut = 0; gOut = x; bOut = c;
+  } else if (h < 300) {
+    rOut = x; gOut = 0; bOut = c;
+  } else {
+    rOut = c; gOut = 0; bOut = x;
+  }
+  
+  const rFinal = Math.round((rOut + m) * 255);
+  const gFinal = Math.round((gOut + m) * 255);
+  const bFinal = Math.round((bOut + m) * 255);
+  
+  return `rgb(${rFinal}, ${gFinal}, ${bFinal})`;
+}
+
 export function AnimatedBackground() {
   const [targetScrollPercent, setTargetScrollPercent] = useState(0);
   const [smoothScrollPercent, setSmoothScrollPercent] = useState(0);
   const rafRef = useRef<number>();
+  
+  // Easter egg settings from CSS custom properties
+  const [orbBrightness, setOrbBrightness] = useState(1.0);
+  const [vignetteStyle, setVignetteStyle] = useState('classic');
+  const [animationSpeed, setAnimationSpeed] = useState(1.0);
+  const [colorVariation, setColorVariation] = useState(1.0);
+
+  // Read settings from CSS custom properties
+  useEffect(() => {
+    const checkSettings = () => {
+      const root = document.documentElement;
+      const brightness = parseFloat(root.style.getPropertyValue('--orb-brightness') || '0.5');
+      const vignette = root.style.getPropertyValue('--vignette-style') || 'minimal';
+      const speed = parseFloat(root.style.getPropertyValue('--animation-speed') || '1.5'); // Changed default to 1.5x
+      const variation = parseFloat(root.style.getPropertyValue('--color-variation') || '1.0');
+      setOrbBrightness(brightness);
+      setVignetteStyle(vignette);
+      setAnimationSpeed(speed);
+      setColorVariation(variation);
+    };
+    
+    checkSettings();
+    // Check periodically for easter egg changes
+    const interval = setInterval(checkSettings, 100);
+    return () => clearInterval(interval);
+  }, []);
 
   // RAW SCROLL TRACKING - set target
   useEffect(() => {
@@ -111,130 +202,246 @@ export function AnimatedBackground() {
   
   const orbColor = `rgb(${interpolatedR}, ${interpolatedG}, ${interpolatedB})`;
   
+  // Create color variations for different orbs (hue shifts with controllable intensity)
+  // MASSIVE SHIFTS for CLEARLY VISIBLE differences: ±90°, ±60°, ±120°
+  const orbColor1 = shiftHue(interpolatedR, interpolatedG, interpolatedB, -90 * colorVariation);  // COOL - completely different hue
+  const orbColor2 = shiftHue(interpolatedR, interpolatedG, interpolatedB, 90 * colorVariation);   // WARM - completely different hue
+  const orbColor3 = shiftHue(interpolatedR, interpolatedG, interpolatedB, -60 * colorVariation);
+  const orbColor4 = shiftHue(interpolatedR, interpolatedG, interpolatedB, 60 * colorVariation);
+  const orbColor5 = shiftHue(interpolatedR, interpolatedG, interpolatedB, -120 * colorVariation); // EXTREME cool
+  const orbColor6 = shiftHue(interpolatedR, interpolatedG, interpolatedB, 120 * colorVariation);  // EXTREME warm
+  
+  // Vignette styles with adaptive intensity for desktop/mobile
+  const vignetteGradients = {
+    classic: 'radial-gradient(circle at center, transparent 0%, transparent 20%, rgba(3, 7, 18, 0.5) 45%, rgba(3, 7, 18, 0.8) 75%, rgba(3, 7, 18, 0.95) 100%)',
+    inverted: 'radial-gradient(circle at center, rgba(3, 7, 18, 0.85) 0%, rgba(3, 7, 18, 0.7) 25%, rgba(3, 7, 18, 0.4) 50%, transparent 75%, transparent 100%)',
+    // Minimal - different intensity for desktop (0.5) vs mobile (0.3)
+    minimal: window.innerWidth >= 768 
+      ? 'radial-gradient(circle at center, transparent 0%, transparent 40%, rgba(3, 7, 18, 0.2) 70%, rgba(3, 7, 18, 0.5) 100%)'
+      : 'radial-gradient(circle at center, transparent 0%, transparent 40%, rgba(3, 7, 18, 0.15) 70%, rgba(3, 7, 18, 0.3) 100%)',
+    none: 'transparent'
+  };
+  
   return (
     <div className="fixed inset-0 overflow-hidden" style={{ backgroundColor: '#030712' }}>
-      {/* ============ OPTIMALIZOVANÉ - 8 ORBŮ PRO PERFORMANCE ============ */}
+      {/* ============ VYLEPŠENÉ ROZMÍSTĚNÍ - POKRYTÍ CELÉ STRÁNKY ============ */}
       
-      {/* ORB 1 - Top left corner */}
+      {/* LAYER 1: ROHY - velké, daleko venku */}
+      
+      {/* Top-left corner */}
       <div 
         className="orb-1 absolute rounded-full"
         style={{
-          top: '-20%',
-          left: '-15%',
-          width: '900px',
-          height: '900px',
-          filter: 'blur(120px)',
-          opacity: 0.15,
-          background: orbColor,
+          top: '-25%',
+          left: '-20%',
+          width: '1000px',
+          height: '1000px',
+          filter: 'blur(130px)',
+          opacity: 0.18 * orbBrightness,
+          background: orbColor1, // Hue -15° (cooler)
+          animation: `orb-float-1 ${48 / animationSpeed}s ease-in-out infinite`,
           willChange: 'transform, filter',
         }}
       />
       
-      {/* ORB 2 - Top right corner */}
+      {/* Top-right corner */}
       <div 
         className="orb-2 absolute rounded-full"
         style={{
-          top: '-22%',
-          right: '-18%',
-          width: '850px',
-          height: '850px',
-          filter: 'blur(115px)',
-          opacity: 0.14,
-          background: orbColor,
+          top: '-25%',
+          right: '-20%',
+          width: '1000px',
+          height: '1000px',
+          filter: 'blur(130px)',
+          opacity: 0.18 * orbBrightness,
+          background: orbColor2, // Hue +15° (warmer)
+          animation: `orb-float-2 ${42 / animationSpeed}s ease-in-out infinite`,
           willChange: 'transform, filter',
         }}
       />
       
-      {/* ORB 3 - Bottom left corner */}
+      {/* Bottom-left corner */}
       <div 
         className="orb-3 absolute rounded-full"
         style={{
-          bottom: '-18%',
+          bottom: '-25%',
           left: '-20%',
-          width: '880px',
-          height: '880px',
-          filter: 'blur(118px)',
-          opacity: 0.15,
-          background: orbColor,
+          width: '1000px',
+          height: '1000px',
+          filter: 'blur(130px)',
+          opacity: 0.18 * orbBrightness,
+          background: orbColor3, // Hue -10°
+          animation: `orb-float-3 ${45 / animationSpeed}s ease-in-out infinite`,
           willChange: 'transform, filter',
         }}
       />
       
-      {/* ORB 4 - Bottom right corner */}
+      {/* Bottom-right corner */}
       <div 
         className="orb-4 absolute rounded-full"
         style={{
-          bottom: '-20%',
-          right: '-16%',
-          width: '860px',
-          height: '860px',
-          filter: 'blur(116px)',
-          opacity: 0.14,
-          background: orbColor,
+          bottom: '-25%',
+          right: '-20%',
+          width: '1000px',
+          height: '1000px',
+          filter: 'blur(130px)',
+          opacity: 0.18 * orbBrightness,
+          background: orbColor4, // Hue +10°
+          animation: `orb-float-4 ${50 / animationSpeed}s ease-in-out infinite`,
           willChange: 'transform, filter',
         }}
       />
       
-      {/* ORB 5 - Top center */}
+      {/* LAYER 2: STŘEDY STRAN - desktop */}
+      
+      {/* Top center */}
       <div 
-        className="orb-5 absolute rounded-full"
+        className="absolute rounded-full"
         style={{
-          top: '-15%',
+          top: '-10%',
           left: '50%',
           transform: 'translateX(-50%)',
-          width: '750px',
-          height: '750px',
-          filter: 'blur(105px)',
-          opacity: 0.13,
-          background: orbColor,
+          width: '700px',
+          height: '700px',
+          filter: 'blur(100px)',
+          opacity: 0.15 * orbBrightness,
+          background: orbColor5, // CHANGED from orbColor to orbColor5 (-120°)
           willChange: 'transform, filter',
         }}
       />
       
-      {/* ORB 6 - Left center */}
+      {/* Bottom center */}
       <div 
-        className="orb-6 absolute rounded-full"
+        className="absolute rounded-full"
+        style={{
+          bottom: '-10%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '700px',
+          height: '700px',
+          filter: 'blur(100px)',
+          opacity: 0.15 * orbBrightness,
+          background: orbColor6, // CHANGED from orbColor to orbColor6 (+120°)
+          willChange: 'transform, filter',
+        }}
+      />
+      
+      {/* Left center - jen desktop */}
+      <div 
+        className="absolute rounded-full hidden md:block"
         style={{
           top: '50%',
-          left: '-18%',
+          left: '-10%',
           transform: 'translateY(-50%)',
-          width: '780px',
-          height: '780px',
-          filter: 'blur(108px)',
-          opacity: 0.13,
-          background: orbColor,
+          width: '600px',
+          height: '600px',
+          filter: 'blur(90px)',
+          opacity: 0.14 * orbBrightness,
+          background: orbColor1, // CHANGED from orbColor to orbColor1 (-90°)
           willChange: 'transform, filter',
         }}
       />
       
-      {/* ORB 7 - Right center */}
+      {/* Right center - jen desktop */}
       <div 
-        className="orb-7 absolute rounded-full"
+        className="absolute rounded-full hidden md:block"
         style={{
           top: '50%',
-          right: '-16%',
+          right: '-10%',
           transform: 'translateY(-50%)',
-          width: '760px',
-          height: '760px',
-          filter: 'blur(106px)',
-          opacity: 0.12,
-          background: orbColor,
+          width: '600px',
+          height: '600px',
+          filter: 'blur(90px)',
+          opacity: 0.14 * orbBrightness,
+          background: orbColor2, // CHANGED from orbColor to orbColor2 (+90°)
           willChange: 'transform, filter',
         }}
       />
       
-      {/* ORB 8 - Center (hlavní světelný zdroj) */}
+      {/* LAYER 3: STŘED - velmi ztlumený */}
+      
+      {/* Center orb - SNÍŽENÁ OPACITY */}
       <div 
-        className="orb-8 absolute rounded-full"
+        className="absolute rounded-full"
         style={{
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: '800px',
-          height: '800px',
-          filter: 'blur(110px)',
-          opacity: 0.11,
-          background: orbColor,
+          width: '400px',
+          height: '400px',
+          filter: 'blur(80px)',
+          opacity: 0.06 * orbBrightness, // SNÍŽENO z 0.12 na 0.06
+          background: orbColor, // Keep base color for center (subtle)
+          willChange: 'transform, filter',
+        }}
+      />
+      
+      {/* LAYER 4: MOBILE ACCENTS - vylepšené pokrytí */}
+      
+      {/* Upper section - mobile */}
+      <div 
+        className="absolute rounded-full md:hidden"
+        style={{
+          top: '15%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '600px',
+          height: '600px',
+          filter: 'blur(95px)',
+          opacity: 0.14 * orbBrightness,
+          background: orbColor5, // Hue -20°
+          animation: `orb-float-mobile-1 ${35 / animationSpeed}s ease-in-out infinite`,
+          willChange: 'transform, filter',
+        }}
+      />
+      
+      {/* Middle-upper - mobile */}
+      <div 
+        className="absolute rounded-full md:hidden"
+        style={{
+          top: '35%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '550px',
+          height: '550px',
+          filter: 'blur(90px)',
+          opacity: 0.12 * orbBrightness,
+          background: orbColor6, // Hue +20°
+          animation: `orb-float-mobile-2 ${30 / animationSpeed}s ease-in-out infinite`,
+          willChange: 'transform, filter',
+        }}
+      />
+      
+      {/* Middle-lower - mobile */}
+      <div 
+        className="absolute rounded-full md:hidden"
+        style={{
+          top: '65%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '550px',
+          height: '550px',
+          filter: 'blur(90px)',
+          opacity: 0.12 * orbBrightness,
+          background: orbColor3, // Hue -10°
+          animation: `orb-float-mobile-1 ${38 / animationSpeed}s ease-in-out infinite reverse`,
+          willChange: 'transform, filter',
+        }}
+      />
+      
+      {/* Lower section - mobile */}
+      <div 
+        className="absolute rounded-full md:hidden"
+        style={{
+          bottom: '15%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '600px',
+          height: '600px',
+          filter: 'blur(95px)',
+          opacity: 0.14 * orbBrightness,
+          background: orbColor4, // Hue +10°
+          animation: `orb-float-mobile-2 ${32 / animationSpeed}s ease-in-out infinite reverse`,
           willChange: 'transform, filter',
         }}
       />
@@ -242,11 +449,11 @@ export function AnimatedBackground() {
       {/* Dark overlay pro kontrast a depth */}
       <div className="absolute inset-0 bg-gradient-to-b from-gray-950/70 via-gray-950/50 to-gray-950/70 pointer-events-none" />
       
-      {/* VIGNETTE EFFECT - silný pro focus */}
+      {/* VIGNETTE EFFECT - controllable via easter egg */}
       <div 
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(circle at center, transparent 0%, transparent 20%, rgba(3, 7, 18, 0.4) 45%, rgba(3, 7, 18, 0.75) 75%, rgba(3, 7, 18, 0.92) 100%)'
+          background: vignetteGradients[vignetteStyle as keyof typeof vignetteGradients] || vignetteGradients.classic
         }}
       />
     </div>

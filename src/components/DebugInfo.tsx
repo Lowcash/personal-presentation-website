@@ -26,7 +26,11 @@ const ACHIEVEMENT_HINTS: Record<string, string> = {
   'repeat-visitor': 'Visit the site 3+ times',
 };
 
-export function DebugInfo() {
+interface DebugInfoProps {
+  onVisibilityChange?: (isVisible: boolean) => void;
+}
+
+export function DebugInfo({ onVisibilityChange }: DebugInfoProps = {}) {
   const [isVisible, setIsVisible] = useState(false);
   const [scrollPercent, setScrollPercent] = useState(0);
   const [orbR, setOrbR] = useState(0);
@@ -411,6 +415,13 @@ export function DebugInfo() {
     }
   }, [isResizing, scale]);
 
+  // Notify parent about visibility change
+  useEffect(() => {
+    if (onVisibilityChange) {
+      onVisibilityChange(isVisible);
+    }
+  }, [isVisible, onVisibilityChange]);
+
   if (!isVisible) {
     return (
       <div 
@@ -441,396 +452,456 @@ export function DebugInfo() {
           paddingLeft: 'env(safe-area-inset-left)',
         }}
       >
-        <div className="bg-gray-800/80 backdrop-blur-sm rounded-lg p-2 border border-gray-700">
-          <Terminal className="w-6 h-6 text-gray-400" aria-hidden="true" />
-        </div>
+        {/* Just the icon, no background - more subtle */}
+        <Terminal className="w-6 h-6 text-gray-400" aria-hidden="true" />
       </div>
     );
   }
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
   return (
-    <div 
-      ref={panelRef}
-      className={`fixed z-[70] font-mono text-xs transition-all ${
-        isDragging ? 'cursor-grabbing' : 'cursor-grab'
-      }`}
-      onMouseDown={handleMouseDown}
-      role="region"
-      aria-label="Developer debug console"
-      style={{ left: `${position.x}px`, top: `${position.y}px`, transform: `scale(${scale})` }}
-    >
-      {/* Cyber/retro styled panel */}
-      <div 
-        className="relative border-2 rounded-lg overflow-hidden backdrop-blur-xl"
-        style={{
-          borderColor: `rgb(${orbR}, ${orbG}, ${orbB})`,
-          boxShadow: `0 0 20px rgba(${orbR}, ${orbG}, ${orbB}, 0.3), inset 0 0 20px rgba(${orbR}, ${orbG}, ${orbB}, 0.05)`,
-          background: 'rgba(3, 7, 18, 0.9)'
-        }}
-      >
-        {/* Header */}
+    <>
+      {/* Mobile: Fullscreen modal with backdrop */}
+      {isMobile && (
+        <div className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="h-full w-full flex flex-col">
+            {/* Cyber/retro styled panel - MOBILE fullscreen with scroll */}
+            <div 
+              className="relative h-full flex flex-col backdrop-blur-xl"
+              style={{
+                background: 'rgba(3, 7, 18, 0.95)'
+              }}
+            >
+              {/* Header - Fixed at top */}
+              <div 
+                className="px-4 py-3 flex items-center justify-between border-b-2 flex-shrink-0"
+                style={{ 
+                  borderColor: `rgb(${orbR}, ${orbG}, ${orbB})`,
+                  background: `rgba(${orbR}, ${orbG}, ${orbB}, 0.15)`
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <Terminal className="w-5 h-5" style={{ color: `rgb(${orbR}, ${orbG}, ${orbB})` }} />
+                  <span className="text-white">DEV.CONSOLE</span>
+                </div>
+                <button
+                  onClick={() => setIsVisible(false)}
+                  className="text-gray-400 hover:text-white transition-colors cursor-pointer text-xl"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Content - Scrollable */}
+              <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-3" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+                {/* Rest of content from desktop version */}
+                {renderConsoleContent()}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop: Draggable panel */}
+      {!isMobile && (
         <div 
-          className="px-4 py-2 flex items-center justify-between border-b-2"
+          ref={panelRef}
+          className={`fixed z-[70] font-mono text-xs transition-all ${
+            isDragging ? 'cursor-grabbing' : 'cursor-grab'
+          }`}
+          onMouseDown={handleMouseDown}
+          role="region"
+          aria-label="Developer debug console"
           style={{ 
-            borderColor: `rgb(${orbR}, ${orbG}, ${orbB})`,
-            background: `rgba(${orbR}, ${orbG}, ${orbB}, 0.1)`
+            left: `${position.x}px`,
+            top: `${position.y}px`,
+            transform: `scale(${scale})`
           }}
         >
-          <div className="flex items-center gap-2">
-            <Terminal className="w-4 h-4" style={{ color: `rgb(${orbR}, ${orbG}, ${orbB})` }} />
-            <span className="text-white">DEV.CONSOLE</span>
-            <span className="text-[8px] text-gray-500">(drag to move)</span>
-          </div>
-          <button
-            onClick={() => setIsVisible(false)}
-            className="text-gray-400 hover:text-white transition-colors cursor-pointer"
+          {/* Cyber/retro styled panel */}
+          <div 
+            className="relative border-2 rounded-lg overflow-hidden backdrop-blur-xl"
+            style={{
+              borderColor: `rgb(${orbR}, ${orbG}, ${orbB})`,
+              boxShadow: `0 0 20px rgba(${orbR}, ${orbG}, ${orbB}, 0.3), inset 0 0 20px rgba(${orbR}, ${orbG}, ${orbB}, 0.05)`,
+              background: 'rgba(3, 7, 18, 0.9)'
+            }}
           >
-            ✕
-          </button>
+            {/* Header */}
+            <div 
+              className="px-4 py-2 flex items-center justify-between border-b-2"
+              style={{ 
+                borderColor: `rgb(${orbR}, ${orbG}, ${orbB})`,
+                background: `rgba(${orbR}, ${orbG}, ${orbB}, 0.1)`
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <Terminal className="w-4 h-4" style={{ color: `rgb(${orbR}, ${orbG}, ${orbB})` }} />
+                <span className="text-white">DEV.CONSOLE</span>
+                <span className="text-[8px] text-gray-500">(drag to move)</span>
+              </div>
+              <button
+                onClick={() => setIsVisible(false)}
+                className="text-gray-400 hover:text-white transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-4 space-y-2 min-w-[280px]">
+              {renderConsoleContent()}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  // Helper function to render console content (shared between mobile and desktop)
+  function renderConsoleContent() {
+    return (
+      <>
+        {/* Scroll Progress */}
+        <div className="flex justify-between items-center">
+          <span className="text-gray-400">SCROLL:</span>
+          <div className="flex items-center gap-2">
+            <div className="w-24 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full rounded-full transition-all"
+                style={{ 
+                  width: `${scrollPercent}%`,
+                  background: `linear-gradient(90deg, rgb(${orbR}, ${orbG}, ${orbB}), rgba(${orbR}, ${orbG}, ${orbB}, 0.6))`
+                }}
+              />
+            </div>
+            <span className="text-white tabular-nums w-12 text-right">{scrollPercent.toFixed(1)}%</span>
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="p-4 space-y-2 min-w-[280px]">
-          {/* Scroll Progress */}
-          <div className="flex justify-between items-center">
-            <span className="text-gray-400">SCROLL:</span>
-            <div className="flex items-center gap-2">
-              <div className="w-24 h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                <div 
-                  className="h-full rounded-full transition-all"
-                  style={{ 
-                    width: `${scrollPercent}%`,
-                    background: `linear-gradient(90deg, rgb(${orbR}, ${orbG}, ${orbB}), rgba(${orbR}, ${orbG}, ${orbB}, 0.6))`
-                  }}
-                />
-              </div>
-              <span className="text-white tabular-nums w-12 text-right">{scrollPercent.toFixed(1)}%</span>
-            </div>
+        {/* RGB Values */}
+        <div className="flex justify-between items-center">
+          <span className="text-gray-400">ORB_RGB:</span>
+          <div className="flex gap-2 text-white tabular-nums">
+            <span style={{ color: `rgb(255, ${orbG}, ${orbB})` }}>{orbR.toString().padStart(3, '0')}</span>
+            <span style={{ color: `rgb(${orbR}, 255, ${orbB})` }}>{orbG.toString().padStart(3, '0')}</span>
+            <span style={{ color: `rgb(${orbR}, ${orbG}, 255)` }}>{orbB.toString().padStart(3, '0')}</span>
           </div>
+        </div>
 
-          {/* RGB Values */}
-          <div className="flex justify-between items-center">
-            <span className="text-gray-400">ORB_RGB:</span>
-            <div className="flex gap-2 text-white tabular-nums">
-              <span style={{ color: `rgb(255, ${orbG}, ${orbB})` }}>{orbR.toString().padStart(3, '0')}</span>
-              <span style={{ color: `rgb(${orbR}, 255, ${orbB})` }}>{orbG.toString().padStart(3, '0')}</span>
-              <span style={{ color: `rgb(${orbR}, ${orbG}, 255)` }}>{orbB.toString().padStart(3, '0')}</span>
+        {/* Color Preview */}
+        <div className="flex justify-between items-center">
+          <span className="text-gray-400">COLOR:</span>
+          <div 
+            className="w-32 h-6 rounded border-2 border-gray-700"
+            style={{ 
+              background: `rgb(${orbR}, ${orbG}, ${orbB})`,
+              boxShadow: `0 0 10px rgba(${orbR}, ${orbG}, ${orbB}, 0.5)`
+            }}
+          />
+        </div>
+
+        {/* FPS */}
+        <div className="flex justify-between items-center">
+          <span className="text-gray-400">FPS:</span>
+          <span 
+            className="text-white tabular-nums"
+            style={{ color: fps < 30 ? '#ef4444' : fps < 50 ? '#f59e0b' : '#10b981' }}
+          >
+            {fps}
+          </span>
+        </div>
+        
+        {/* DIVIDER */}
+        <div className="border-t-2 border-gray-800 my-3" style={{ borderColor: `rgba(${orbR}, ${orbG}, ${orbB}, 0.3)` }} />
+        
+        {/* CONTROLS SECTION */}
+        <div className="space-y-3">
+          <div className="text-xs text-gray-500 uppercase tracking-wider">⚙️ Controls</div>
+          
+          {/* Orb Brightness Slider */}
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-gray-400 text-[10px]">ORB BRIGHTNESS:</span>
+              <span className="text-white tabular-nums text-[10px]">{orbBrightness.toFixed(1)}x</span>
             </div>
-          </div>
-
-          {/* Color Preview */}
-          <div className="flex justify-between items-center">
-            <span className="text-gray-400">COLOR:</span>
-            <div 
-              className="w-32 h-6 rounded border-2 border-gray-700"
-              style={{ 
-                background: `rgb(${orbR}, ${orbG}, ${orbB})`,
-                boxShadow: `0 0 10px rgba(${orbR}, ${orbG}, ${orbB}, 0.5)`
+            <input
+              type="range"
+              min="0.3"
+              max="2.0"
+              step="0.1"
+              value={orbBrightness}
+              onChange={(e) => setOrbBrightness(parseFloat(e.target.value))}
+              className="w-full h-1.5 bg-gray-800 rounded-full appearance-none cursor-pointer"
+              style={{
+                accentColor: `rgb(${orbR}, ${orbG}, ${orbB})`
               }}
             />
           </div>
+          
+          {/* Animation Speed Slider */}
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-gray-400 text-[10px]">ANIMATION SPEED:</span>
+              <span className="text-white tabular-nums text-[10px]">{animationSpeed.toFixed(1)}x</span>
+            </div>
+            <input
+              type="range"
+              min="0.2"
+              max="3.0"
+              step="0.1"
+              value={animationSpeed}
+              onChange={(e) => setAnimationSpeed(parseFloat(e.target.value))}
+              className="w-full h-1.5 bg-gray-800 rounded-full appearance-none cursor-pointer"
+              style={{
+                accentColor: `rgb(${orbR}, ${orbG}, ${orbB})`
+              }}
+            />
+          </div>
+          
+          {/* Color Variation Slider */}
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-gray-400 text-[10px]">COLOR VARIATION:</span>
+              <span className="text-white tabular-nums text-[10px]">{colorVariation.toFixed(0)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              value={colorVariation}
+              onChange={(e) => setColorVariation(parseFloat(e.target.value))}
+              className="w-full h-1.5 bg-gray-800 rounded-full appearance-none cursor-pointer"
+              style={{
+                accentColor: `rgb(${orbR}, ${orbG}, ${orbB})`
+              }}
+            />
+          </div>
+          
+          {/* Scale Slider - RESIZABLE CONSOLE */}
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-gray-400 text-[10px]">CONSOLE SCALE:</span>
+              <span className="text-white tabular-nums text-[10px]">{((scale / 0.8) * 100).toFixed(0)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0.4"
+              max="1.2"
+              step="0.05"
+              value={scale}
+              onChange={(e) => {
+                const newScale = parseFloat(e.target.value);
+                setScale(newScale);
+                localStorage.setItem('debug_scale', String(newScale));
+              }}
+              className="w-full h-1.5 bg-gray-800 rounded-full appearance-none cursor-pointer"
+              style={{
+                accentColor: `rgb(${orbR}, ${orbG}, ${orbB})`
+              }}
+            />
+          </div>
+          
+          {/* Vignette Style Radio */}
+          <div>
+            <div className="text-gray-400 text-[10px] mb-1.5">VIGNETTE STYLE:</div>
+            <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+              {[
+                { value: 'classic', label: 'Classic', desc: 'Dark edges' },
+                { value: 'inverted', label: 'Inverted', desc: 'Dark center' },
+                { value: 'minimal', label: 'Minimal', desc: 'Subtle' },
+                { value: 'none', label: 'None', desc: 'No effect' }
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setVignetteStyle(option.value)}
+                  className={`px-2 py-1.5 rounded border transition-all ${
+                    vignetteStyle === option.value
+                      ? 'border-current text-white'
+                      : 'border-gray-700 text-gray-500 hover:text-gray-300 hover:border-gray-600'
+                  }`}
+                  style={vignetteStyle === option.value ? {
+                    borderColor: `rgb(${orbR}, ${orbG}, ${orbB})`,
+                    background: `rgba(${orbR}, ${orbG}, ${orbB}, 0.15)`
+                  } : {}}
+                >
+                  <div className="font-semibold">{option.label}</div>
+                  <div className="text-[9px] opacity-70">{option.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Reset Button */}
+          <button
+            onClick={() => {
+              const defaults = {
+                brightness: 0.5,
+                vignette: 'minimal',
+                speed: 1.5,
+                variation: 50  // CHANGED default to 50%
+              };
+              
+              setOrbBrightness(defaults.brightness);
+              setVignetteStyle(defaults.vignette);
+              setAnimationSpeed(defaults.speed);
+              setColorVariation(defaults.variation);
+              
+              // Force immediate localStorage update
+              localStorage.setItem('orb_brightness', String(defaults.brightness));
+              localStorage.setItem('vignette_style', defaults.vignette);
+              localStorage.setItem('animation_speed', String(defaults.speed));
+              localStorage.setItem('color_variation', String(defaults.variation));
+            }}
+            className="w-full px-3 py-1.5 text-[10px] text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 rounded transition-all"
+          >
+            RESET TO DEFAULT
+          </button>
+          
+          {/* Reset Achievements Button - DEV ONLY */}
+          <button
+            onClick={() => {
+              if (confirm('⚠️ Reset all achievements? This cannot be undone!')) {
+                // Clear localStorage
+                localStorage.removeItem('achievements');
+                
+                // Clear local state
+                setAchievements([]);
+                
+                // Dispatch event to notify EasterEggs component
+                window.dispatchEvent(new CustomEvent('achievements-reset'));
+                
+                // Show confirmation message
+                console.log(
+                  '%c🔄 Achievements reset! All achievements cleared.',
+                  'color: #ef4444; font-size: 14px; font-weight: bold;'
+                );
+              }
+            }}
+            className="w-full px-3 py-1.5 text-[10px] text-red-400 hover:text-red-300 border border-red-700 hover:border-red-500 rounded transition-all"
+          >
+            RESET ACHIEVEMENTS
+          </button>
+        </div>
 
-          {/* FPS */}
-          <div className="flex justify-between items-center">
-            <span className="text-gray-400">FPS:</span>
-            <span 
-              className="text-white tabular-nums"
-              style={{ color: fps < 30 ? '#ef4444' : fps < 50 ? '#f59e0b' : '#10b981' }}
-            >
-              {fps}
+        {/* DIVIDER */}
+        <div className="border-t-2 border-gray-800 my-3" style={{ borderColor: `rgba(${orbR}, ${orbG}, ${orbB}, 0.3)` }} />
+
+        {/* ACHIEVEMENTS SECTION */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Trophy className="w-3 h-3 text-yellow-400" />
+            <span className="text-xs text-gray-500 uppercase tracking-wider">Achievements</span>
+            <span className="text-[10px] text-gray-600">
+              {achievements.filter(a => a.unlocked).length}/{achievements.length}
             </span>
           </div>
           
-          {/* DIVIDER */}
-          <div className="border-t-2 border-gray-800 my-3" style={{ borderColor: `rgba(${orbR}, ${orbG}, ${orbB}, 0.3)` }} />
-          
-          {/* CONTROLS SECTION */}
-          <div className="space-y-3">
-            <div className="text-xs text-gray-500 uppercase tracking-wider">⚙️ Controls</div>
-            
-            {/* Orb Brightness Slider */}
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-gray-400 text-[10px]">ORB BRIGHTNESS:</span>
-                <span className="text-white tabular-nums text-[10px]">{orbBrightness.toFixed(1)}x</span>
-              </div>
-              <input
-                type="range"
-                min="0.3"
-                max="2.0"
-                step="0.1"
-                value={orbBrightness}
-                onChange={(e) => setOrbBrightness(parseFloat(e.target.value))}
-                className="w-full h-1.5 bg-gray-800 rounded-full appearance-none cursor-pointer"
-                style={{
-                  accentColor: `rgb(${orbR}, ${orbG}, ${orbB})`
-                }}
-              />
-            </div>
-            
-            {/* Animation Speed Slider */}
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-gray-400 text-[10px]">ANIMATION SPEED:</span>
-                <span className="text-white tabular-nums text-[10px]">{animationSpeed.toFixed(1)}x</span>
-              </div>
-              <input
-                type="range"
-                min="0.2"
-                max="3.0"
-                step="0.1"
-                value={animationSpeed}
-                onChange={(e) => setAnimationSpeed(parseFloat(e.target.value))}
-                className="w-full h-1.5 bg-gray-800 rounded-full appearance-none cursor-pointer"
-                style={{
-                  accentColor: `rgb(${orbR}, ${orbG}, ${orbB})`
-                }}
-              />
-            </div>
-            
-            {/* Color Variation Slider */}
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-gray-400 text-[10px]">COLOR VARIATION:</span>
-                <span className="text-white tabular-nums text-[10px]">{colorVariation.toFixed(0)}%</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="5"
-                value={colorVariation}
-                onChange={(e) => setColorVariation(parseFloat(e.target.value))}
-                className="w-full h-1.5 bg-gray-800 rounded-full appearance-none cursor-pointer"
-                style={{
-                  accentColor: `rgb(${orbR}, ${orbG}, ${orbB})`
-                }}
-              />
-            </div>
-            
-            {/* Scale Slider - RESIZABLE CONSOLE */}
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-gray-400 text-[10px]">CONSOLE SCALE:</span>
-                <span className="text-white tabular-nums text-[10px]">{((scale / 0.8) * 100).toFixed(0)}%</span>
-              </div>
-              <input
-                type="range"
-                min="0.4"
-                max="1.2"
-                step="0.05"
-                value={scale}
-                onChange={(e) => {
-                  const newScale = parseFloat(e.target.value);
-                  setScale(newScale);
-                  localStorage.setItem('debug_scale', String(newScale));
-                }}
-                className="w-full h-1.5 bg-gray-800 rounded-full appearance-none cursor-pointer"
-                style={{
-                  accentColor: `rgb(${orbR}, ${orbG}, ${orbB})`
-                }}
-              />
-            </div>
-            
-            {/* Vignette Style Radio */}
-            <div>
-              <div className="text-gray-400 text-[10px] mb-1.5">VIGNETTE STYLE:</div>
-              <div className="grid grid-cols-2 gap-1.5 text-[10px]">
-                {[
-                  { value: 'classic', label: 'Classic', desc: 'Dark edges' },
-                  { value: 'inverted', label: 'Inverted', desc: 'Dark center' },
-                  { value: 'minimal', label: 'Minimal', desc: 'Subtle' },
-                  { value: 'none', label: 'None', desc: 'No effect' }
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setVignetteStyle(option.value)}
-                    className={`px-2 py-1.5 rounded border transition-all ${
-                      vignetteStyle === option.value
-                        ? 'border-current text-white'
-                        : 'border-gray-700 text-gray-500 hover:text-gray-300 hover:border-gray-600'
-                    }`}
-                    style={vignetteStyle === option.value ? {
-                      borderColor: `rgb(${orbR}, ${orbG}, ${orbB})`,
-                      background: `rgba(${orbR}, ${orbG}, ${orbB}, 0.15)`
-                    } : {}}
-                  >
-                    <div className="font-semibold">{option.label}</div>
-                    <div className="text-[9px] opacity-70">{option.desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            {/* Reset Button */}
-            <button
-              onClick={() => {
-                const defaults = {
-                  brightness: 0.5,
-                  vignette: 'minimal',
-                  speed: 1.5,
-                  variation: 50  // CHANGED default to 50%
-                };
-                
-                setOrbBrightness(defaults.brightness);
-                setVignetteStyle(defaults.vignette);
-                setAnimationSpeed(defaults.speed);
-                setColorVariation(defaults.variation);
-                
-                // Force immediate localStorage update
-                localStorage.setItem('orb_brightness', String(defaults.brightness));
-                localStorage.setItem('vignette_style', defaults.vignette);
-                localStorage.setItem('animation_speed', String(defaults.speed));
-                localStorage.setItem('color_variation', String(defaults.variation));
-              }}
-              className="w-full px-3 py-1.5 text-[10px] text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 rounded transition-all"
-            >
-              RESET TO DEFAULT
-            </button>
-            
-            {/* Reset Achievements Button - DEV ONLY */}
-            <button
-              onClick={() => {
-                if (confirm('⚠️ Reset all achievements? This cannot be undone!')) {
-                  // Clear localStorage
-                  localStorage.removeItem('achievements');
-                  
-                  // Clear local state
-                  setAchievements([]);
-                  
-                  // Dispatch event to notify EasterEggs component
-                  window.dispatchEvent(new CustomEvent('achievements-reset'));
-                  
-                  // Show confirmation message
-                  console.log(
-                    '%c🔄 Achievements reset! All achievements cleared.',
-                    'color: #ef4444; font-size: 14px; font-weight: bold;'
-                  );
-                }
-              }}
-              className="w-full px-3 py-1.5 text-[10px] text-red-400 hover:text-red-300 border border-red-700 hover:border-red-500 rounded transition-all"
-            >
-              RESET ACHIEVEMENTS
-            </button>
-          </div>
-
-          {/* DIVIDER */}
-          <div className="border-t-2 border-gray-800 my-3" style={{ borderColor: `rgba(${orbR}, ${orbG}, ${orbB}, 0.3)` }} />
-
-          {/* ACHIEVEMENTS SECTION */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Trophy className="w-3 h-3 text-yellow-400" />
-              <span className="text-xs text-gray-500 uppercase tracking-wider">Achievements</span>
-              <span className="text-[10px] text-gray-600">
-                {achievements.filter(a => a.unlocked).length}/{achievements.length}
-              </span>
-            </div>
-            
-            {achievements.length > 0 ? (
-              <div className="grid grid-cols-4 gap-1.5 relative">
-                {achievements.map((achievement) => (
-                  <div
-                    key={achievement.id}
-                    className={`aspect-square flex items-center justify-center text-xl rounded border-2 transition-all cursor-pointer ${
-                      achievement.unlocked 
-                        ? 'border-yellow-400/50 bg-yellow-400/10' 
-                        : 'border-gray-700 bg-gray-800/30 grayscale opacity-30'
-                    }`}
-                    onMouseEnter={() => {
-                      // Desktop: hover to show tooltip
+          {achievements.length > 0 ? (
+            <div className="grid grid-cols-4 gap-1.5 relative">
+              {achievements.map((achievement) => (
+                <div
+                  key={achievement.id}
+                  className={`aspect-square flex items-center justify-center text-xl rounded border-2 transition-all cursor-pointer ${
+                    achievement.unlocked 
+                      ? 'border-yellow-400/50 bg-yellow-400/10' 
+                      : 'border-gray-700 bg-gray-800/30 grayscale opacity-30'
+                  }`}
+                  onMouseEnter={() => {
+                    // Desktop: hover to show tooltip
+                    setTooltip({ achievement, show: true });
+                  }}
+                  onMouseLeave={() => {
+                    // Desktop: hide tooltip on mouse leave
+                    if (tooltipTimeoutRef.current) {
+                      clearTimeout(tooltipTimeoutRef.current);
+                    }
+                    setTooltip(null);
+                  }}
+                  onClick={() => {
+                    // Mobile: click to toggle tooltip
+                    if (tooltip?.achievement.id === achievement.id) {
+                      setTooltip(null);
+                    } else {
                       setTooltip({ achievement, show: true });
-                    }}
-                    onMouseLeave={() => {
-                      // Desktop: hide tooltip on mouse leave
+                      // Auto-hide after 3 seconds on mobile
                       if (tooltipTimeoutRef.current) {
                         clearTimeout(tooltipTimeoutRef.current);
                       }
-                      setTooltip(null);
-                    }}
-                    onClick={() => {
-                      // Mobile: click to toggle tooltip
-                      if (tooltip?.achievement.id === achievement.id) {
+                      tooltipTimeoutRef.current = setTimeout(() => {
                         setTooltip(null);
-                      } else {
-                        setTooltip({ achievement, show: true });
-                        // Auto-hide after 3 seconds on mobile
-                        if (tooltipTimeoutRef.current) {
-                          clearTimeout(tooltipTimeoutRef.current);
-                        }
-                        tooltipTimeoutRef.current = setTimeout(() => {
-                          setTooltip(null);
-                        }, 3000);
-                      }
-                    }}
-                  >
-                    {achievement.unlocked ? achievement.icon : '🔒'}
-                  </div>
-                ))}
-                
-                {/* Tooltip */}
-                {tooltip && (
+                      }, 3000);
+                    }
+                  }}
+                >
+                  {achievement.unlocked ? achievement.icon : '🔒'}
+                </div>
+              ))}
+              
+              {/* Tooltip */}
+              {tooltip && (
+                <div 
+                  className="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full z-10 pointer-events-none"
+                  style={{
+                    animation: 'fadeIn 0.2s ease-out'
+                  }}
+                >
                   <div 
-                    className="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full z-10 pointer-events-none"
+                    className="bg-gray-900 border-2 rounded-lg p-2 shadow-2xl min-w-[200px] max-w-[240px]"
                     style={{
-                      animation: 'fadeIn 0.2s ease-out'
+                      borderColor: tooltip.achievement.unlocked 
+                        ? `rgb(${orbR}, ${orbG}, ${orbB})` 
+                        : 'rgb(107, 114, 128)',
+                      boxShadow: tooltip.achievement.unlocked
+                        ? `0 0 20px rgba(${orbR}, ${orbG}, ${orbB}, 0.4)`
+                        : '0 4px 6px rgba(0, 0, 0, 0.3)'
                     }}
                   >
-                    <div 
-                      className="bg-gray-900 border-2 rounded-lg p-2 shadow-2xl min-w-[200px] max-w-[240px]"
-                      style={{
-                        borderColor: tooltip.achievement.unlocked 
-                          ? `rgb(${orbR}, ${orbG}, ${orbB})` 
-                          : 'rgb(107, 114, 128)',
-                        boxShadow: tooltip.achievement.unlocked
-                          ? `0 0 20px rgba(${orbR}, ${orbG}, ${orbB}, 0.4)`
-                          : '0 4px 6px rgba(0, 0, 0, 0.3)'
-                      }}
-                    >
-                      <div className="flex items-start gap-2 mb-1">
-                        <span className="text-lg">{tooltip.achievement.icon}</span>
-                        <div className="flex-1">
-                          <div className={`text-[10px] font-semibold ${
-                            tooltip.achievement.unlocked ? 'text-yellow-400' : 'text-gray-400'
-                          }`}>
-                            {tooltip.achievement.unlocked ? tooltip.achievement.name : '???'}
-                          </div>
+                    <div className="flex items-start gap-2 mb-1">
+                      <span className="text-lg">{tooltip.achievement.icon}</span>
+                      <div className="flex-1">
+                        <div className={`text-[10px] font-semibold ${
+                          tooltip.achievement.unlocked ? 'text-yellow-400' : 'text-gray-400'
+                        }`}>
+                          {tooltip.achievement.unlocked ? tooltip.achievement.name : '???'}
                         </div>
                       </div>
-                      <div className="text-[9px] text-gray-400 mt-1">
-                        {tooltip.achievement.unlocked 
-                          ? tooltip.achievement.description
-                          : ACHIEVEMENT_HINTS[tooltip.achievement.id] || 'Keep exploring...'}
-                      </div>
                     </div>
-                    {/* Arrow */}
-                    <div 
-                      className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0"
-                      style={{
-                        borderLeft: '6px solid transparent',
-                        borderRight: '6px solid transparent',
-                        borderTop: `6px solid ${tooltip.achievement.unlocked 
-                          ? `rgb(${orbR}, ${orbG}, ${orbB})` 
-                          : 'rgb(107, 114, 128)'}`
-                      }}
-                    />
+                    <div className="text-[9px] text-gray-400 mt-1">
+                      {tooltip.achievement.unlocked 
+                        ? tooltip.achievement.description
+                        : ACHIEVEMENT_HINTS[tooltip.achievement.id] || 'Keep exploring...'}
+                    </div>
                   </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-[10px] text-gray-600 text-center py-2">
-                No achievements yet. Keep exploring!
-              </div>
-            )}
-          </div>
-
-          {/* Hint */}
-          <div className="pt-2 border-t border-gray-800 text-gray-500 text-center">
-            <div className="hidden md:block">Press 'D' to toggle</div>
-            <div className="md:hidden text-[9px]">4-finger tap to toggle</div>
-          </div>
+                  {/* Arrow */}
+                  <div 
+                    className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0"
+                    style={{
+                      borderLeft: '6px solid transparent',
+                      borderRight: '6px solid transparent',
+                      borderTop: `6px solid ${tooltip.achievement.unlocked 
+                        ? `rgb(${orbR}, ${orbG}, ${orbB})` 
+                        : 'rgb(107, 114, 128)'}`
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-[10px] text-gray-600 text-center py-2">
+              No achievements yet. Keep exploring!
+            </div>
+          )}
         </div>
-      </div>
-    </div>
-  );
+
+        {/* Hint */}
+        <div className="pt-2 border-t border-gray-800 text-gray-500 text-center">
+          <div className="hidden md:block">Press 'D' to toggle</div>
+          <div className="md:hidden text-[9px]">4-finger tap to toggle</div>
+        </div>
+      </>
+    );
+  }
 }

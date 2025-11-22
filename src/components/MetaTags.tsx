@@ -8,7 +8,7 @@ export function MetaTags() {
     const ogImageUrl = `${window.location.origin}/og-image.png`;
 
     // Set document title
-    document.title = "Lukáš Machala - Fullstack Developer & Software Architect";
+    document.title = "Lukáš Machala (lowcash) • Fullstack Developer & AI Architect";
 
     // Set meta description
     const metaDescription = document.querySelector('meta[name="description"]');

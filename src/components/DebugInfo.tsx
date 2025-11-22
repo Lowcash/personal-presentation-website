@@ -469,6 +469,8 @@ export function DebugInfo({ onVisibilityChange }: DebugInfoProps = {}) {
             {/* Cyber/retro styled panel - MOBILE fullscreen with scroll */}
             <div 
               className="relative h-full flex flex-col backdrop-blur-xl"
+              role="region"
+              aria-label="Developer debug console"
               style={{
                 background: 'rgba(3, 7, 18, 0.95)'
               }}

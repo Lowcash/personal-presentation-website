@@ -233,8 +233,115 @@ export function AnimatedBackground() {
   
   return (
     <div className="fixed inset-0 overflow-hidden" style={{ backgroundColor: '#030712' }}>
-      {/* ============ ORBY DOČASNĚ VYPNUTY PRO TESTOVÁNÍ PERFORMANCE ============ */}
-      {/* All orbs disabled to test mobile performance. Re-enable by uncommenting sections below. */}
+      {/* ============ ANIMATED ORBS ============ */}
+      {/* Central main orb - největší, primární barva */}
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 orb-1"
+        style={{
+          width: '800px',
+          height: '800px',
+          background: `radial-gradient(circle, ${orbColor} 0%, transparent 70%)`,
+          filter: `blur(120px) brightness(${orbBrightness})`,
+          opacity: 0.25,
+          willChange: 'transform',
+          animationDuration: `${45 / animationSpeed}s`,
+        }}
+      />
+      
+      {/* Secondary orbs - hue shifted variations */}
+      <div
+        className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 orb-2"
+        style={{
+          width: '600px',
+          height: '600px',
+          background: `radial-gradient(circle, ${orbColor1} 0%, transparent 70%)`,
+          filter: `blur(100px) brightness(${orbBrightness})`,
+          opacity: 0.2,
+          willChange: 'transform',
+          animationDuration: `${38 / animationSpeed}s`,
+        }}
+      />
+      
+      <div
+        className="absolute top-3/4 right-1/4 -translate-x-1/2 -translate-y-1/2 orb-3"
+        style={{
+          width: '650px',
+          height: '650px',
+          background: `radial-gradient(circle, ${orbColor2} 0%, transparent 70%)`,
+          filter: `blur(110px) brightness(${orbBrightness})`,
+          opacity: 0.22,
+          willChange: 'transform',
+          animationDuration: `${42 / animationSpeed}s`,
+        }}
+      />
+      
+      {/* Tertiary accent orbs - smaller, more vibrant */}
+      <div
+        className="absolute top-1/3 right-1/3 -translate-x-1/2 -translate-y-1/2 orb-4"
+        style={{
+          width: '500px',
+          height: '500px',
+          background: `radial-gradient(circle, ${orbColor3} 0%, transparent 70%)`,
+          filter: `blur(90px) brightness(${orbBrightness})`,
+          opacity: 0.18,
+          willChange: 'transform',
+          animationDuration: `${40 / animationSpeed}s`,
+        }}
+      />
+      
+      <div
+        className="absolute bottom-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 orb-5"
+        style={{
+          width: '550px',
+          height: '550px',
+          background: `radial-gradient(circle, ${orbColor4} 0%, transparent 70%)`,
+          filter: `blur(95px) brightness(${orbBrightness})`,
+          opacity: 0.19,
+          willChange: 'transform',
+          animationDuration: `${36 / animationSpeed}s`,
+        }}
+      />
+      
+      {/* Extreme hue shifts for maximum variation */}
+      <div
+        className="absolute top-2/3 left-2/3 -translate-x-1/2 -translate-y-1/2 orb-6"
+        style={{
+          width: '700px',
+          height: '700px',
+          background: `radial-gradient(circle, ${orbColor5} 0%, transparent 70%)`,
+          filter: `blur(115px) brightness(${orbBrightness})`,
+          opacity: 0.21,
+          willChange: 'transform',
+          animationDuration: `${44 / animationSpeed}s`,
+        }}
+      />
+      
+      <div
+        className="absolute top-1/2 right-1/2 -translate-x-1/2 -translate-y-1/2 orb-7"
+        style={{
+          width: '600px',
+          height: '600px',
+          background: `radial-gradient(circle, ${orbColor6} 0%, transparent 70%)`,
+          filter: `blur(105px) brightness(${orbBrightness})`,
+          opacity: 0.2,
+          willChange: 'transform',
+          animationDuration: `${50 / animationSpeed}s`,
+        }}
+      />
+      
+      {/* Additional accent orb */}
+      <div
+        className="absolute bottom-1/3 right-2/3 -translate-x-1/2 -translate-y-1/2 orb-8"
+        style={{
+          width: '550px',
+          height: '550px',
+          background: `radial-gradient(circle, ${orbColor1} 0%, transparent 70%)`,
+          filter: `blur(100px) brightness(${orbBrightness})`,
+          opacity: 0.18,
+          willChange: 'transform',
+          animationDuration: `${46 / animationSpeed}s`,
+        }}
+      />
       
       {/* Dark overlay pro kontrast a depth */}
       <div className="absolute inset-0 bg-gradient-to-b from-gray-950/70 via-gray-950/50 to-gray-950/70 pointer-events-none" />

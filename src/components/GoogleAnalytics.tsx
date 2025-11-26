@@ -1,6 +1,3 @@
-// Google Analytics component
-// Uses VITE_GA_TRACKING_ID from .env
-
 export function GoogleAnalytics() {
   const GA_MEASUREMENT_ID = import.meta.env?.VITE_GA_TRACKING_ID;
 
@@ -28,5 +25,3 @@ export function GoogleAnalytics() {
     </>
   );
 }
-
-// Usage: Import in App.tsx and add <GoogleAnalytics /> at the top

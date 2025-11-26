@@ -7,7 +7,6 @@ import { WorkExperience } from './components/WorkExperience';
 import { BeyondCode } from './components/BeyondCode';
 import { WhatsNext } from './components/WhatsNext';
 import { Contact } from './components/Contact';
-import { ScrollProgress } from './components/ScrollProgress';
 import { ScrollToTop } from './components/ScrollToTop';
 import { ScrollNavigation } from './components/ScrollNavigation';
 import { GoogleAnalytics } from './components/GoogleAnalytics';
@@ -15,8 +14,8 @@ import { AnimatedBackground } from './components/AnimatedBackground';
 import { ParallaxSection } from './components/ParallaxSection';
 import { DebugInfo } from './components/DebugInfo';
 import { EasterEggs } from './components/EasterEggs';
-import { ANIMATION_CONFIG } from './lib/constants';
-import { useEffect, useState, useRef } from 'react';
+import { ScrollProgress } from './components/ScrollProgress';
+import { useEffect, useState } from 'react';
 
 export default function App() {
   const sections = [
@@ -32,12 +31,9 @@ export default function App() {
   ];
 
   const [currentSection, setCurrentSection] = useState(0);
-  const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set(['hero'])); // Hero je vždycky visible na začátku!
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDevConsoleOpen, setIsDevConsoleOpen] = useState(false);
-  const [savedSection, setSavedSection] = useState(0); // Save section when menu opens
   const [isRestoringScroll, setIsRestoringScroll] = useState(false); // Flag for scroll restoration
-  const observerRef = useRef<IntersectionObserver | null>(null);
 
   // Prevent body scroll when dev console is open on mobile (hamburger menu handled by ScrollNavigation)
   useEffect(() => {
@@ -65,43 +61,6 @@ export default function App() {
       };
     }
   }, [isDevConsoleOpen]);
-
-  // Intersection Observer pro fade efekt
-  useEffect(() => {
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          setVisibleSections(prev => {
-            const newSet = new Set(prev);
-            if (entry.isIntersecting) {
-              newSet.add(entry.target.id);
-            } else {
-              newSet.delete(entry.target.id);
-            }
-            return newSet;
-          });
-        });
-      },
-      {
-        threshold: ANIMATION_CONFIG.SCROLL_REVEAL_THRESHOLD,
-        rootMargin: ANIMATION_CONFIG.SCROLL_REVEAL_ROOT_MARGIN
-      }
-    );
-
-    // Observe all sections
-    sections.forEach(({ id }) => {
-      const element = document.getElementById(id);
-      if (element && observerRef.current) {
-        observerRef.current.observe(element);
-      }
-    });
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, []);
 
   // Simple scroll tracking - which section is in view (DISABLED when mobile menu is open)
   useEffect(() => {
@@ -143,15 +102,6 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [sections, isMobileMenuOpen, isRestoringScroll]);
 
-  // Save and restore currentSection when menu opens/closes
-  useEffect(() => {
-    if (isMobileMenuOpen) {
-      // Menu just opened - save current section
-      setSavedSection(currentSection);
-    }
-    // Don't restore on close - let handleScroll do its job naturally
-  }, [isMobileMenuOpen, currentSection]);
-
   useEffect(() => {
     // Set favicon
     const setFavicon = () => {
@@ -183,29 +133,18 @@ export default function App() {
       <GoogleAnalytics />
       <EasterEggs />
       
-      {/* Skip to main content - accessibility */}
-      <a href="#main-content" className="skip-to-content">
-        Skip to main content
-      </a>
-      
       {/* ANIMATED BACKGROUND - čistě od scroll pozice */}
       <AnimatedBackground />
       
       <div className="text-white" style={{ background: 'transparent' }} role="document">
-        <ScrollProgress aria-hidden="true" />
-        
         {/* Main content - semantic HTML */}
         <main id="main-content" role="main">
-          {/* All sections - scroll snap + fade + parallax effect */}
+          {/* All sections - CSS scroll-snap (no fade effect) */}
           {sections.map(({ Component, id }, index) => (
             <ParallaxSection
               key={id}
               id={id}
               className="min-h-screen"
-              style={{ 
-                scrollSnapAlign: 'start',
-                opacity: visibleSections.has(id) ? 1 : 0.05
-              }}
               // Accessibility: section landmarks
               role={index === 0 ? 'banner' : 'region'}
               aria-label={sections[index].name}
@@ -230,6 +169,7 @@ export default function App() {
         />
         
         <DebugInfo onVisibilityChange={setIsDevConsoleOpen} />
+        <ScrollProgress currentSection={currentSection} totalSections={sections.length} />
       </div>
     </>
   );

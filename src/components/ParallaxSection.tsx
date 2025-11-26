@@ -1,4 +1,4 @@
-import { useEffect, useRef, ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 interface ParallaxSectionProps {
   children: ReactNode;
@@ -8,16 +8,14 @@ interface ParallaxSectionProps {
 }
 
 export function ParallaxSection({ children, id, className, style }: ParallaxSectionProps) {
-  const sectionRef = useRef<HTMLElement>(null);
-
   return (
     <section
-      ref={sectionRef}
       id={id}
       className={className}
       style={{
         ...style,
-        transition: 'opacity 700ms ease-out', // Preserve opacity transition
+        scrollSnapAlign: 'start',
+        scrollSnapStop: 'always', // Force snap stop on each section
       }}
     >
       {children}

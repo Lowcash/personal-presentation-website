@@ -106,7 +106,20 @@ export default function App() {
     const sectionId = sections[index].id;
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // iOS Safari fallback - use window.scrollTo for better compatibility
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      
+      if (isIOS) {
+        // iOS: Use window.scrollTo with smooth behavior
+        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+        window.scrollTo({
+          top: elementPosition,
+          behavior: 'smooth'
+        });
+      } else {
+        // Other browsers: Use scrollIntoView
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
   };
 

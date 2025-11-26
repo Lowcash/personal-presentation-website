@@ -349,13 +349,12 @@ html {
   overflow-x: hidden;
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
-  scroll-snap-type: y mandatory; /* Always snap to sections - fullscreen storytelling */
+  scroll-snap-type: y mandatory; /* Mandatory for fullscreen effect */
   scroll-padding-top: 0;
-  scroll-behavior: smooth;
   background-color: #030712; /* Dark background - prevents white flash on overscroll */
   overscroll-behavior: none; /* Prevents bounce effect on mobile */
-  -webkit-overflow-scrolling: touch; /* iOS momentum scrolling */
   height: 100%; /* iOS Safari fix */
+  /* NOTE: scroll-behavior removed - causes iOS Safari conflicts with scroll-snap */
 }
 
 /* Disable scroll snap when mobile menu is open */

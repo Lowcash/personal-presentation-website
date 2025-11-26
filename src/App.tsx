@@ -102,24 +102,6 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [sections, isMobileMenuOpen, isRestoringScroll]);
 
-  useEffect(() => {
-    // Set favicon
-    const setFavicon = () => {
-      // Remove existing favicons
-      const existingIcons = document.querySelectorAll('link[rel*="icon"]');
-      existingIcons.forEach(icon => icon.remove());
-
-      // Add SVG favicon
-      const svgFavicon = document.createElement('link');
-      svgFavicon.rel = 'icon';
-      svgFavicon.type = 'image/svg+xml';
-      svgFavicon.href = '/favicon.svg';
-      document.head.appendChild(svgFavicon);
-    };
-
-    setFavicon();
-  }, []);
-
   const scrollToSection = (index: number) => {
     const sectionId = sections[index].id;
     const element = document.getElementById(sectionId);

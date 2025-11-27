@@ -76,7 +76,7 @@ export function Contact() {
         </p>
         
         {/* Easter Egg Hint - for curious developers */}
-        <p className="text-xs text-gray-700 mt-4 font-mono">
+        <p className="text-xs text-gray-700 mt-4 font-mono hidden md:block">
           <span className="opacity-50 hover:opacity-100 transition-opacity cursor-default">
             💡 Hint for devs: Check the console or press 'D'
           </span>

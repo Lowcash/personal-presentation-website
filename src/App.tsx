@@ -16,6 +16,7 @@ import { DebugInfo } from './components/DebugInfo';
 import { EasterEggs } from './components/EasterEggs';
 import { ScrollProgress } from './components/ScrollProgress';
 import { useEffect, useState, useMemo } from 'react';
+import { LazyMotion, domAnimation } from 'framer-motion';
 
 export default function App() {
   const sections = useMemo(() => [
@@ -123,7 +124,7 @@ export default function App() {
   };
 
   return (
-    <>
+    <LazyMotion features={domAnimation}>
       <GoogleAnalytics />
       <EasterEggs />
       
@@ -165,6 +166,6 @@ export default function App() {
         <DebugInfo onVisibilityChange={setIsDevConsoleOpen} />
         <ScrollProgress />
       </div>
-    </>
+    </LazyMotion>
   );
 }
